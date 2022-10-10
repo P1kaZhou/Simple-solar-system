@@ -33,6 +33,7 @@
 #include <cmath>
 #include <memory>
 #include <math.h>
+#include "Mesh.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 
@@ -44,6 +45,7 @@ const static float kSizeEarth = 0.5;
 const static float kSizeMoon = 0.25;
 const static float kRadOrbitEarth = 10;
 const static float kRadOrbitMoon = 2;
+
 
 // Window parameters
 GLFWwindow *g_window = nullptr;
@@ -65,7 +67,20 @@ std::vector<unsigned int> g_triangleIndices;
 //Colors
 std::vector<float> g_vertexColors;
 
+//Mesh initialization
+Mesh meshSun;
+Mesh meshEarth;
+Mesh meshMoon;
+
+float _radius;
+float _theta;
+float _phi;
 // Basic camera model
+
+// Model transformation matrices
+glm::mat4 g_sun, g_earth, g_moon;
+
+
 class Camera {
 public:
     inline float getFov() const { return m_fov; }
@@ -207,7 +222,7 @@ std::string file2String(const std::string &filename) {
 // Loads and compile a shader, before attaching it to a program
 void loadShader(GLuint program, GLenum type, const std::string &shaderFilename) {
     GLuint shader = glCreateShader(
-            type); // Create the shader, e.g., a vertex shader to be applied to every single vertex of a mesh
+            type); // Create the shader, e.g., a vertex shader to be applied to every single vertex of a meshSun
     std::string shaderSourceString = file2String(shaderFilename); // Loads the shader source from a file to a C++ string
     const GLchar *shaderSource = (const GLchar *) shaderSourceString.c_str(); // Interface the C++ string through a C pointer
     glShaderSource(shader, 1, &shaderSource, NULL); // load the vertex shader code
@@ -233,8 +248,9 @@ void initGPUprogram() {
     // TODO: set shader variables, textures, etc.
 }
 
-// Define your mesh(es) in the CPU memory
+// Define your meshSun(es) in the CPU memory
 void initCPUgeometry() {
+    /*
     g_vertexPositions = {
             0.f, 0.f, 0.f,
             1.f, 0.f, 0.f,
@@ -248,12 +264,22 @@ void initCPUgeometry() {
     };
 
     g_triangleIndices = {0, 1, 2};
+    */
+    // meshSun.initCPU();
+    meshSun.initCPU(32, kSizeSun, 0., 0., 0);
+    meshEarth.initCPU(32, kSizeEarth,10.,0.,0.);
+    meshMoon.initCPU(32, kSizeMoon,12.,0.,0.);
 }
 
+
 void initGPUgeometry() {
+
+    meshSun.initGPUGeometrySphere();
+    meshEarth.initGPUGeometrySphere();
+    meshMoon.initGPUGeometrySphere();
     // Create a single handle, vertex array object that contains attributes,
     // vertex buffer objects (e.g., vertex's position, normal, and color)
-
+    /*
     glGenVertexArrays(1,
                       &g_vao); // If your system doesn't support OpenGL 4.5, you should use this instead of glCreateVertexArrays.
 
@@ -278,7 +304,7 @@ void initGPUgeometry() {
     glEnableVertexAttribArray(1);
 
     // Same for an index buffer object that stores the list of indices of the
-    // triangles forming the mesh
+    // triangles forming the meshSun
     size_t indexBufferSize = sizeof(unsigned int) * g_triangleIndices.size();
 
 
@@ -288,6 +314,7 @@ void initGPUgeometry() {
 
 
     glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
+    */
 }
 
 void initCamera() {
@@ -322,15 +349,29 @@ void render() {
 
     const glm::mat4 viewMatrix = g_camera.computeViewMatrix();
     const glm::mat4 projMatrix = g_camera.computeProjectionMatrix();
-
+    const glm::vec3 camPosition = g_camera.getPosition();
+    glUniform3f(glGetUniformLocation(g_program, "camPos"), camPosition[0], camPosition[1], camPosition[2]);
     glUniformMatrix4fv(glGetUniformLocation(g_program, "viewMat"), 1, GL_FALSE, glm::value_ptr(
             viewMatrix)); // compute the view matrix of the camera and pass it to the GPU program
     glUniformMatrix4fv(glGetUniformLocation(g_program, "projMat"), 1, GL_FALSE, glm::value_ptr(
             projMatrix)); // compute the projection matrix of the camera and pass it to the GPU program
-
+    /*
     glBindVertexArray(g_vao);     // activate the VAO storing geometry data
     glDrawElements(GL_TRIANGLES, g_triangleIndices.size(), GL_UNSIGNED_INT,
                    0); // Call for rendering: stream the current GPU geometry through the current GPU program
+    */
+    float speed = 0.02f;
+    if (glfwGetKey(g_window, GLFW_KEY_UP)) _theta = std::max(_theta - speed, 0.14f);
+    if (glfwGetKey(g_window, GLFW_KEY_DOWN)) _theta = std::min(_theta + speed, 3.00f);
+    if (glfwGetKey(g_window, GLFW_KEY_LEFT)) _phi -= speed;
+    if (glfwGetKey(g_window, GLFW_KEY_RIGHT)) _phi += speed;
+
+    g_camera.setPosition(glm::vec3(10.0 * std::sin(_theta) * std::sin(_phi),
+                                   10.0 * std::sin(_theta) * std::cos(_phi),
+                                   10.0 * std::cos(_theta)));
+    meshSun.render();
+    meshEarth.render();
+    meshMoon.render();
 }
 
 // Update any accessible variable based on the current time
@@ -350,41 +391,3 @@ int main(int argc, char **argv) {
     clear();
     return EXIT_SUCCESS;
 }
-
-class Mesh {
-public:
-    void init(); // should properly set up the geometry buffer
-    void render(); // should be called in the main rendering loop
-
-    inline void initSphere(const size_t resolution = 16) {
-
-        // Let's use the spherical coordinates
-        for (int i = 0; i < resolution; i++) { // Theta
-            for (int j = 0; j < resolution; j++) { // Phi
-                float theta = i * M_PI / 2 * resolution;
-                float phi = j * M_PI / resolution;
-                this->addPositionCoordinate(std::sin(theta) * std::cos(phi));
-                this->addPositionCoordinate(std::sin(theta) * std::sin(phi));
-                this->addPositionCoordinate(std::cos(theta));
-            }
-        }
-
-    } // should generate a unit sphere
-
-private:
-    std::vector<float> m_vertexPositions;
-    std::vector<float> m_vertexNormals;
-    std::vector<unsigned int> m_triangleIndices;
-    GLuint m_vao = 0;
-    GLuint m_posVbo = 0;
-    GLuint m_normalVbo = 0;
-    GLuint m_ibo = 0;
-
-    void addPositionCoordinate(float x) {
-        m_vertexPositions.push_back(x);
-    }
-
-    std::vector<float> getPositions() {
-        return m_vertexPositions;
-    }
-};
