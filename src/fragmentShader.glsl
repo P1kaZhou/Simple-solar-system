@@ -1,8 +1,9 @@
 #version 330 core
 // Minimal GL version support expected from the GPU
 in vec3 fNormal;
-out vec4 color;	  // Shader output: color of this fragment
+out vec4 Megacolor;	  // Shader output: color of this fragment
 uniform vec3 camPos;
+uniform vec3 color;
 in vec3 fPosition;
 
 void main() {
@@ -16,9 +17,9 @@ void main() {
 
 	vec3 v = normalize(camPos - fPosition);
 	vec3 r = normalize(2*n*dot(n,l) - l);
-	vec3 ambient = vec3(1.0,1.0,0.0);
+	vec3 ambient = color;
 	vec3 diffuse = kd*max(dot(n,l), 0)*(ambient*vec3(1.0,1.0,1.0));
 	vec3 specular = ks*pow(max(dot(v,l),0),alpha)*(ambient*vec3(1.0,1.0,1.0));
-	color = vec4(ambient + diffuse + specular, 1.0); // Building RGBA from RGB.
+	Megacolor = vec4(ambient + diffuse + specular, 1.0); // Building RGBA from RGB.
 
 }

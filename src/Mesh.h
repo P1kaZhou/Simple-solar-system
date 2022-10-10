@@ -170,7 +170,7 @@ public:
     }
 
     void setColor(float r, float g, float b){
-        gluniform3f(glGetUniformLocation(m_program), r,g,b);
+        glUniform3f(glGetUniformLocation(m_program, "color"), r,g,b);
     }
 
 
