@@ -13,7 +13,9 @@
 #include "dep/glfw/deps/linmath.h"
 #include "Camera.h"
 #include <glm/ext.hpp>
-#include "utils.h"
+//#include "utils.h"
+
+void loadShader(GLuint program, GLenum type, const std::string &shaderFilename);
 
 class Mesh {
 public:

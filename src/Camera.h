@@ -9,7 +9,7 @@
 #include "glm/vec3.hpp"
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
-#include <math.h>
+#include <cmath>
 
 class Camera {
 public:
