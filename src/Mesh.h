@@ -10,11 +10,25 @@
 #include <math.h>
 #include <iostream>
 #include <glad/glad.h>
+#include "dep/glfw/deps/linmath.h"
+#include "Camera.h"
+#include <glm/ext.hpp>
+#include "utils.h"
 
 class Mesh {
 public:
     void init(); // should properly set up the geometry buffer
-    void render() {
+    void render(Camera g_camera) {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Erase the color and z buffers.
+
+        const glm::mat4 viewMatrix = g_camera.computeViewMatrix();
+        const glm::mat4 projMatrix = g_camera.computeProjectionMatrix();
+        const glm::vec3 camPosition = g_camera.getPosition();
+        glUniform3f(glGetUniformLocation(m_program, "camPos"), camPosition[0], camPosition[1], camPosition[2]);
+        glUniformMatrix4fv(glGetUniformLocation(m_program, "viewMat"), 1, GL_FALSE, glm::value_ptr(
+                viewMatrix)); // compute the view matrix of the camera and pass it to the GPU program
+        glUniformMatrix4fv(glGetUniformLocation(m_program, "projMat"), 1, GL_FALSE, glm::value_ptr(
+                projMatrix)); // compute the projection matrix of the camera and pass it to the GPU program
         glBindVertexArray(m_vao);     // activate the VAO storing geometry data
         glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT,
                        0); // Call for rendering: stream the current GPU geometry through the current GPU program
@@ -145,6 +159,20 @@ public:
         glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
     }
 
+    void initGPUProgram(){
+        m_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
+        loadShader(m_program, GL_VERTEX_SHADER, "vertexShader.glsl");
+        loadShader(m_program, GL_FRAGMENT_SHADER, "fragmentShader.glsl");
+        glLinkProgram(m_program); // The main GPU program is ready to be handle streams of polygons
+
+        glUseProgram(m_program);
+        // TODO: set shader variables, textures, etc.
+    }
+
+    void setColor(float r, float g, float b){
+        gluniform3f(glGetUniformLocation(m_program), r,g,b);
+    }
+
 
 private:
     std::vector<float> m_vertexPositions;
@@ -152,7 +180,8 @@ private:
     std::vector<float> m_textureCoords;
     std::vector<unsigned int> m_triangleIndices;
     std::vector<int> m_lineIndices;
-
+    GLuint m_program;
+    vec3 color;
     GLuint m_vao = 0;
     GLuint m_posVbo = 0;
     GLuint m_normalVbo = 0;

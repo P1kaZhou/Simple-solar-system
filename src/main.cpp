@@ -32,12 +32,12 @@
 #include <string>
 #include <cmath>
 #include <memory>
-#include <math.h>
 #include "Mesh.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 
 #include "stb_image.h"
+#include "Camera.h"
 
 // constants
 const static float kSizeSun = 1;
@@ -80,45 +80,6 @@ float _phi;
 // Model transformation matrices
 glm::mat4 g_sun, g_earth, g_moon;
 
-
-class Camera {
-public:
-    inline float getFov() const { return m_fov; }
-
-    inline void setFoV(const float f) { m_fov = f; }
-
-    inline float getAspectRatio() const { return m_aspectRatio; }
-
-    inline void setAspectRatio(const float a) { m_aspectRatio = a; }
-
-    inline float getNear() const { return m_near; }
-
-    inline void setNear(const float n) { m_near = n; }
-
-    inline float getFar() const { return m_far; }
-
-    inline void setFar(const float n) { m_far = n; }
-
-    inline void setPosition(const glm::vec3 &p) { m_pos = p; }
-
-    inline glm::vec3 getPosition() { return m_pos; }
-
-    inline glm::mat4 computeViewMatrix() const {
-        return glm::lookAt(m_pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-    }
-
-    // Returns the projection matrix stemming from the camera intrinsic parameter.
-    inline glm::mat4 computeProjectionMatrix() const {
-        return glm::perspective(glm::radians(m_fov), m_aspectRatio, m_near, m_far);
-    }
-
-private:
-    glm::vec3 m_pos = glm::vec3(0, 0, 0);
-    float m_fov = 45.f;        // Field of view, in degrees
-    float m_aspectRatio = 1.f; // Ratio between the width and the height of the image
-    float m_near = 0.1f; // Distance before which geometry is excluded from the rasterization process
-    float m_far = 10.f; // Distance after which the geometry is excluded from the rasterization process
-};
 
 Camera g_camera;
 
@@ -211,41 +172,13 @@ void initOpenGL() {
     glClearColor(0.7f, 0.7f, 0.7f, 1.0f); // specify the background color, used any time the framebuffer is cleared
 }
 
-// Loads the content of an ASCII file in a standard C++ string
-std::string file2String(const std::string &filename) {
-    std::ifstream t(filename.c_str());
-    std::stringstream buffer;
-    buffer << t.rdbuf();
-    return buffer.str();
-}
-
-// Loads and compile a shader, before attaching it to a program
-void loadShader(GLuint program, GLenum type, const std::string &shaderFilename) {
-    GLuint shader = glCreateShader(
-            type); // Create the shader, e.g., a vertex shader to be applied to every single vertex of a meshSun
-    std::string shaderSourceString = file2String(shaderFilename); // Loads the shader source from a file to a C++ string
-    const GLchar *shaderSource = (const GLchar *) shaderSourceString.c_str(); // Interface the C++ string through a C pointer
-    glShaderSource(shader, 1, &shaderSource, NULL); // load the vertex shader code
-    glCompileShader(shader);
-    GLint success;
-    GLchar infoLog[512];
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cout << "ERROR in compiling " << shaderFilename << "\n\t" << infoLog << std::endl;
-    }
-    glAttachShader(program, shader);
-    glDeleteShader(shader);
-}
-
 void initGPUprogram() {
-    g_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
-    loadShader(g_program, GL_VERTEX_SHADER, "vertexShader.glsl");
-    loadShader(g_program, GL_FRAGMENT_SHADER, "fragmentShader.glsl");
-    glLinkProgram(g_program); // The main GPU program is ready to be handle streams of polygons
-
-    glUseProgram(g_program);
-    // TODO: set shader variables, textures, etc.
+    meshSun.initGPUProgram();
+    meshSun.setColor(1.0,1.0,0.0);
+    meshEarth.initGPUProgram();
+    meshEarth.setColor(0.0,1.0,0.0);
+    meshMoon.initGPUProgram();
+    meshMoon.setColor(0.0,0.0,1.0);
 }
 
 // Define your meshSun(es) in the CPU memory
@@ -267,8 +200,8 @@ void initCPUgeometry() {
     */
     // meshSun.initCPU();
     meshSun.initCPU(32, kSizeSun, 0., 0., 0);
-    meshEarth.initCPU(32, kSizeEarth,10.,0.,0.);
-    meshMoon.initCPU(32, kSizeMoon,12.,0.,0.);
+    meshEarth.initCPU(32, kSizeEarth, 10., 0., 0.);
+    meshMoon.initCPU(32, kSizeMoon, 12., 0., 0.);
 }
 
 
@@ -345,6 +278,7 @@ void clear() {
 
 // The main rendering call
 void render() {
+/*
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Erase the color and z buffers.
 
     const glm::mat4 viewMatrix = g_camera.computeViewMatrix();
@@ -355,7 +289,7 @@ void render() {
             viewMatrix)); // compute the view matrix of the camera and pass it to the GPU program
     glUniformMatrix4fv(glGetUniformLocation(g_program, "projMat"), 1, GL_FALSE, glm::value_ptr(
             projMatrix)); // compute the projection matrix of the camera and pass it to the GPU program
-    /*
+
     glBindVertexArray(g_vao);     // activate the VAO storing geometry data
     glDrawElements(GL_TRIANGLES, g_triangleIndices.size(), GL_UNSIGNED_INT,
                    0); // Call for rendering: stream the current GPU geometry through the current GPU program
@@ -366,12 +300,12 @@ void render() {
     if (glfwGetKey(g_window, GLFW_KEY_LEFT)) _phi -= speed;
     if (glfwGetKey(g_window, GLFW_KEY_RIGHT)) _phi += speed;
 
-    g_camera.setPosition(glm::vec3(10.0 * std::sin(_theta) * std::sin(_phi),
-                                   10.0 * std::sin(_theta) * std::cos(_phi),
-                                   10.0 * std::cos(_theta)));
-    meshSun.render();
-    meshEarth.render();
-    meshMoon.render();
+    g_camera.setPosition(glm::vec3(25.0 * std::sin(_theta) * std::sin(_phi),
+                                   25.0 * std::sin(_theta) * std::cos(_phi),
+                                   25.0 * std::cos(_theta)));
+    meshSun.render(g_camera);
+    meshEarth.render(g_camera);
+    meshMoon.render(g_camera);
 }
 
 // Update any accessible variable based on the current time
