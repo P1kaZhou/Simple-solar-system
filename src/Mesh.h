@@ -20,10 +20,11 @@ void loadShader(GLuint program, GLenum type, const std::string &shaderFilename);
 class Mesh {
 public:
     void init(); // should properly set up the geometry buffer
+
     void render(Camera g_camera) {
         // Erase the color and z buffers.
         glUseProgram(m_program);
-        setColor(r,g,b);
+        setColor(r, g, b);
         const glm::mat4 viewMatrix = g_camera.computeViewMatrix();
         const glm::mat4 projMatrix = g_camera.computeProjectionMatrix();
         const glm::vec3 camPosition = g_camera.getPosition();
@@ -44,6 +45,11 @@ public:
                         float y_center,
                         float z_center) {
 
+        revolution_process = 0;
+
+        this->x = x_center;
+        this->y = y_center;
+        this->z = z_center;
 
         float x, y, z, xy;                              // vertex position
         float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
@@ -91,6 +97,7 @@ public:
         // |  / |
         // | /  |
         // k2--k2+1
+
         int k1, k2;
         for (int i = 0; i < resolution; ++i) {
             k1 = i * (resolution + 1);     // beginning of current stack
@@ -162,7 +169,7 @@ public:
         glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
     }
 
-    void initGPUProgram(){
+    void initGPUProgram() {
         m_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
         loadShader(m_program, GL_VERTEX_SHADER, "vertexShader.glsl");
         loadShader(m_program, GL_FRAGMENT_SHADER, "fragmentShader.glsl");
@@ -171,11 +178,33 @@ public:
         // TODO: set shader variables, textures, etc.
     }
 
-    void setColor(float r, float g, float b){
-        glUniform3f(glGetUniformLocation(m_program, "color"), r,g,b);
+    void setColor(float r, float g, float b) {
+        glUniform3f(glGetUniformLocation(m_program, "color"), r, g, b);
         this->r = r;
         this->g = g;
         this->b = b;
+    }
+
+    float getPositionX() {
+        return x;
+    }
+
+    float getPositionY() {
+        return y;
+    }
+
+    float getPositionZ() {
+        return z;
+    }
+
+    void move(float dx, float dy, float dz) {
+        x += dx;
+        y += dy;
+        z += dz;
+    }
+
+    int getRevolutionProcess(){
+        return revolution_process;
     }
 
 
@@ -189,6 +218,13 @@ private:
     float r;
     float g;
     float b;
+    float x;
+    float y;
+    float z;
+
+    int revolution_process;
+
+
     GLuint m_vao = 0;
     GLuint m_posVbo = 0;
     GLuint m_normalVbo = 0;

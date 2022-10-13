@@ -47,6 +47,10 @@ const static float kSizeEarth = 0.5;
 const static float kSizeMoon = 0.25;
 const static float kRadOrbitEarth = 10;
 const static float kRadOrbitMoon = 2;
+const static float earthRevolutionSpeed = 2.0*M_PI/360.0;
+const static float moonRevolutionSPeed = 2.0*M_PI/360.0;
+const static float earthRotationSpeed = M_PI/360.0;
+const static float moonRotationSPeed = M_PI/360.0;
 
 
 // Window parameters
@@ -308,8 +312,10 @@ void clear() {
 
 // The main rendering call
 void render() {
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-/*
+
+    /*
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Erase the color and z buffers.
 
     const glm::mat4 viewMatrix = g_camera.computeViewMatrix();
@@ -325,6 +331,7 @@ void render() {
     glDrawElements(GL_TRIANGLES, g_triangleIndices.size(), GL_UNSIGNED_INT,
                    0); // Call for rendering: stream the current GPU geometry through the current GPU program
     */
+
     float speed = 0.02f;
     if (glfwGetKey(g_window, GLFW_KEY_UP)) _theta = std::max(_theta - speed, 0.14f);
     if (glfwGetKey(g_window, GLFW_KEY_DOWN)) _theta = std::min(_theta + speed, 3.00f);
@@ -342,6 +349,23 @@ void render() {
 // Update any accessible variable based on the current time
 void update(const float currentTimeInSec) {
     // std::cout << currentTimeInSec << std::endl;
+
+    // Compute the needed movements
+    float x_earth = meshEarth.getPositionX();
+    float y_earth = meshEarth.getPositionY();
+
+    float x_moon = meshMoon.getPositionX();
+    float y_moon = meshMoon.getPositionY();
+
+    //Compute the movement
+    int global_increment = meshEarth.getRevolutionProcess();
+
+    float future_earth_x = kRadOrbitEarth*cos(earthRevolutionSpeed*(earth_increment+1));
+    float future_earth_y = kRadOrbitEarth*sin(earthRevolutionSpeed*(earth_increment+1));
+
+    float earth_dx = future_earth_x - x_earth;
+    float earth_dy = future_earth_y - y_earth;
+
 
 }
 
