@@ -46,11 +46,10 @@ public:
         trans = glm::rotate(trans, rotation_angle , rotation_axis);
 
         glUniform4f(glGetUniformLocation(m_program, "position"), x, y, z, 1.0f);
-        glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(
-                trans));
+        glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(trans));
         glActiveTexture(GL_TEXTURE0); // activate texture unit 0
         glBindTexture(GL_TEXTURE_2D, textureInt);
-        glUniform1i(glGetUniformLocation(m_program, "ourTexture"), textureInt);
+        // glUniform1i(glGetUniformLocation(m_program, "ourTexture"), textureInt);
 
     };
 
@@ -61,7 +60,6 @@ public:
                         float y_center,
                         float z_center,
                         glm::vec3 rotation_axis) {
-
 
         this->x = x_center;
         this->y = y_center;
@@ -78,9 +76,6 @@ public:
         float sectorStep = 2 * M_PI / resolution;
         float stackStep = M_PI / resolution;
         float sectorAngle, stackAngle;
-
-
-
 
         for (int i = 0; i <= resolution; ++i) {
             stackAngle = M_PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
@@ -187,8 +182,8 @@ public:
         glGenBuffers(1, &m_ibo);
         glBindBuffer(GL_ARRAY_BUFFER, m_ibo);
         glBufferData(GL_ARRAY_BUFFER, indexBufferSize, m_triangleIndices.data(), GL_DYNAMIC_READ);
-        glVertexAttribPointer(2, 3, GL_INT, GL_FALSE, 3 * sizeof(GLint), 0); // AAAAA
-        glEnableVertexAttribArray(2); // WHAT DO I PUT HERE
+        // glVertexAttribPointer(2, 3, GL_INT, GL_FALSE, 3 * sizeof(GLuint), 0); // AAAAA
+        // glEnableVertexAttribArray(2); // WHAT DO I PUT HERE
 
 
         glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
@@ -207,7 +202,7 @@ public:
         unsigned char *data = stbi_load(
                 texture.c_str(),
                 &width, &height,
-                &numComponents, // 1 for a 8 bit grey-scale image, 3 for 24bits RGB image, 4 for 32bits RGBA image
+                &numComponents, // 1 for an 8 bit grey-scale image, 3 for 24bits RGB image, 4 for 32bits RGBA image
                 0);
 
         GLuint texID;
@@ -215,6 +210,8 @@ public:
         glGenTextures(1, &texID); // generate an OpenGL texture container
         // glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texID); // activate the texture
+
+
         // Setup the texture filtering option and repeat mode; check www.opengl.org for details.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -224,11 +221,16 @@ public:
         glGenBuffers(1, &m_tbo);
         glBindBuffer(GL_ARRAY_BUFFER, m_tbo);
         glBufferData(GL_ARRAY_BUFFER, vertexTextureBufferSize, m_textureCoords.data(), GL_DYNAMIC_READ);
+
         // Fill the GPU texture with the data stored in the CPU image
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), 0);
         glEnableVertexAttribArray(2);
-        glUniform1i(glGetUniformLocation(m_program, "ourTexture"), texID); //?
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        // glUniform1i(glGetUniformLocation(m_program, "ourTexture"), texID); //?
+        // glUniform1i(glGetUniformLocation(m_program, "material.albedoTex"), 0); // texture unit 0
 
         glDrawElements(GL_TRIANGLES, vertexTextureBufferSize, GL_UNSIGNED_INT, 0);
         // Free useless CPU memory
@@ -267,6 +269,7 @@ private:
     std::vector<unsigned int> m_triangleIndices;
     std::vector<int> m_lineIndices;
     GLuint m_program;
+
     float r;
     float g;
     float b;
@@ -279,9 +282,6 @@ private:
     glm::vec3 rotation_axis;
     float rotation_angle;
 
-    float next_x;
-    float next_y;
-    float next_z;
 
     GLuint m_vao = 0;
     GLuint m_posVbo = 0;
@@ -293,34 +293,17 @@ private:
         m_vertexPositions.push_back(x);
     }
 
-    std::vector<float> getPositions() {
-        return m_vertexPositions;
-    }
-
     void addNormalCoordinate(float x) {
         m_vertexNormals.push_back(x);
-    }
-
-    std::vector<float> getNormals() {
-        return m_vertexNormals;
     }
 
     void addTriangleCoordinate(unsigned int x) {
         m_triangleIndices.push_back(x);
     }
 
-    std::vector<unsigned int> getTriangles() {
-        return m_triangleIndices;
-    }
-
     void addLineIndice(int x) {
         m_lineIndices.push_back(x);
     }
-
-    std::vector<int> getLineIndices() {
-        return m_lineIndices;
-    }
-
 
 };
 

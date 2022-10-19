@@ -1,14 +1,16 @@
 #version 330 core
 // Minimal GL version support expected from the GPU
 in vec3 fNormal;
-out vec4 Megacolor;	  // Shader output: color of this fragment
-uniform vec3 camPos;
-uniform vec3 color;
-
 in vec3 fPosition;
 in vec2 TexCoord;
+
+uniform vec3 camPos;
+uniform vec3 color;
+// uniform sampler2D ourTexture;
+
 out vec4 FragColor;
-uniform sampler2D ourTexture;
+out vec4 Megacolor;	  // Shader output: color of this fragment
+
 
 
 	void main() {
@@ -28,5 +30,5 @@ uniform sampler2D ourTexture;
 
 
 		Megacolor = vec4(ambient + diffuse + specular, 1.0); // Building RGBA from RGB.
-		FragColor = texture(ourTexture, TexCoord);
+		// FragColor = texture(ourTexture, TexCoord);
 	}
