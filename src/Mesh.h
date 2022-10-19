@@ -13,15 +13,16 @@
 #include "dep/glfw/deps/linmath.h"
 #include "Camera.h"
 #include <glm/ext.hpp>
-//#include "utils.h"
 
-void loadShader(GLuint program, GLenum type, const std::string &shaderFilename);
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#include "utils.h"
 
 class Mesh {
 public:
     void init(); // should properly set up the geometry buffer
 
-    void render(Camera g_camera) {
+    void render(Camera g_camera, std::string texture) {
         // Erase the color and z buffers.
         glUseProgram(m_program);
         setColor(r, g, b);
@@ -47,6 +48,9 @@ public:
         glUniform4f(glGetUniformLocation(m_program, "position"), x, y, z, 1.0f);
         glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(
                 trans));
+        glActiveTexture(GL_TEXTURE0); // activate texture unit 0
+        glBindTexture(GL_TEXTURE_2D, textureInt);
+        glUniform1i(glGetUniformLocation(m_program, "ourTexture"), textureInt);
 
     };
 
@@ -104,10 +108,10 @@ public:
                 this->addNormalCoordinate(nz);
 
                 // vertex tex coord (s, t) range between [0, 1]
-                // s = (float)j / resolution;
-                // t = (float)i / resolution;
-                // texCoords.push_back(s);
-                // texCoords.push_back(t);
+                s = (float)j / resolution;
+                t = (float)i / resolution;
+                m_textureCoords.push_back(s);
+                m_textureCoords.push_back(t);
             }
         }
 
@@ -175,26 +179,58 @@ public:
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
         glEnableVertexAttribArray(1);
 
+        glGenBuffers(1, &m_ibo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_ibo);
+
+
         // Same for an index buffer object that stores the list of indices of the
         // triangles forming the meshSun
         size_t indexBufferSize = sizeof(unsigned int) * m_triangleIndices.size();
 
 
-        glGenBuffers(1, &m_ibo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferSize, m_triangleIndices.data(), GL_DYNAMIC_READ);
-
-
         glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
     }
 
-    void initGPUProgram() {
+    void initGPUProgram(std::string texture) {
+
+        size_t vertexTextureBufferSize = sizeof(float) * m_textureCoords.size();
         m_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
         loadShader(m_program, GL_VERTEX_SHADER, "vertexShader.glsl");
         loadShader(m_program, GL_FRAGMENT_SHADER, "fragmentShader.glsl");
         glLinkProgram(m_program); // The main GPU program is ready to be handle streams of polygons
 
-        // TODO: set shader variables, textures, etc.
+        int width, height, numComponents;
+        // Loading the image in CPU memory using stb_image
+        unsigned char *data = stbi_load(
+                texture.c_str(),
+                &width, &height,
+                &numComponents, // 1 for a 8 bit grey-scale image, 3 for 24bits RGB image, 4 for 32bits RGBA image
+                0);
+
+        GLuint texID;
+
+        glGenTextures(1, &texID); // generate an OpenGL texture container
+        glBindTexture(GL_TEXTURE_2D, texID); // activate the texture
+        // Setup the texture filtering option and repeat mode; check www.opengl.org for details.
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glGenBuffers(1, &m_tbo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_tbo);
+        glBufferData(GL_ARRAY_BUFFER, vertexTextureBufferSize, m_textureCoords.data(), GL_DYNAMIC_READ);
+        // Fill the GPU texture with the data stored in the CPU image
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        glUniform1i(glGetUniformLocation(m_program, "ourTexture"), texID);
+        textureInt = texID;
+        glDrawElements(GL_TRIANGLES, vertexTextureBufferSize, GL_UNSIGNED_INT, 0);
+        // Free useless CPU memory
+        stbi_image_free(data);
+        glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
+
+
     }
 
     void setColor(float r, float g, float b) {
@@ -254,6 +290,7 @@ private:
     float y;
     float z;
     float radius_multiplier;
+    GLuint textureInt;
 
     glm::vec3 rotation_axis;
     float rotation_angle;
@@ -266,6 +303,7 @@ private:
     GLuint m_posVbo = 0;
     GLuint m_normalVbo = 0;
     GLuint m_ibo = 0;
+    GLuint m_tbo =0;
 
     void addPositionCoordinate(float x) {
         m_vertexPositions.push_back(x);

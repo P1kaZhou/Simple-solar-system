@@ -26,20 +26,15 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <fstream>
-#include <sstream>
+
 #include <vector>
-#include <string>
+
 #include <cmath>
 #include <memory>
 
-
 #include "Mesh.h"
-#include "utils.h"
 
-#define STB_IMAGE_IMPLEMENTATION
 
-#include "stb_image.h"
 #include "Camera.h"
 
 // constants
@@ -67,6 +62,11 @@ GLuint g_posVbo = 0;
 GLuint g_colVbo = 0;
 GLuint g_ibo = 0;
 
+// Textures
+const std::string sunTexture = "media/earth.jpg";
+const std::string earthTexture = "media/moon.jpg";
+const std::string moonTexture = "media/sun.jpg";
+
 // All vertex positions packed in one array [x0, y0, z0, x1, y1, z1, ...]
 std::vector<float> g_vertexPositions;
 // All triangle indices packed in one array [v00, v01, v02, v10, v11, v12, ...] with vij the index of j-th vertex of the i-th triangle
@@ -90,26 +90,6 @@ glm::mat4 g_sun, g_earth, g_moon;
 
 
 Camera g_camera;
-
-GLuint loadTextureFromFileToGPU(const std::string &filename) {
-    int width, height, numComponents;
-    // Loading the image in CPU memory using stb_image
-    unsigned char *data = stbi_load(
-            filename.c_str(),
-            &width, &height,
-            &numComponents, // 1 for a 8 bit grey-scale image, 3 for 24bits RGB image, 4 for 32bits RGBA image
-            0);
-
-    GLuint texID;
-    // TODO: create a texture and upload the image data in GPU memory using
-    // glGenTextures, glBindTexture, glTexParameteri, and glTexImage2D
-
-    // Free useless CPU memory
-    stbi_image_free(data);
-    glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
-
-    return texID;
-}
 
 // Executed each time the window is resized. Adjust the aspect ratio and the rendering viewport to the current window.
 void windowSizeCallback(GLFWwindow *window, int width, int height) {
@@ -181,11 +161,11 @@ void initOpenGL() {
 }
 
 void initGPUprogram() {
-    meshSun.initGPUProgram();
+    meshSun.initGPUProgram(sunTexture);
     meshSun.setColor(1.0,1.0,0.0);
-    meshEarth.initGPUProgram();
+    meshEarth.initGPUProgram(earthTexture);
     meshEarth.setColor(0.0,1.0,0.0);
-    meshMoon.initGPUProgram();
+    meshMoon.initGPUProgram(moonTexture);
     meshMoon.setColor(0.0,0.0,1.0);
 }
 
@@ -206,7 +186,6 @@ void initCPUgeometry() {
 
     g_triangleIndices = {0, 1, 2};
     */
-    // meshSun.initCPU();
     glm::vec3 sunRotation = glm::vec3(1.,0.,0.);
     meshSun.initCPU(32, kSizeSun, 0., 0., 0., sunRotation);
     glm::vec3 earthRotation = glm::vec3(cos(23.5*M_PI/180.),0.,sin(23.5*M_PI/180.));
@@ -318,9 +297,10 @@ void render() {
     g_camera.setPosition(glm::vec3(25.0 * std::sin(_theta) * std::sin(_phi),
                                    25.0 * std::sin(_theta) * std::cos(_phi),
                                    25.0 * std::cos(_theta)));
-    meshSun.render(g_camera);
-    meshEarth.render(g_camera);
-    meshMoon.render(g_camera);
+
+    meshSun.render(g_camera, sunTexture);
+    meshEarth.render(g_camera, earthTexture);
+    meshMoon.render(g_camera, moonTexture);
 }
 
 // Update any accessible variable based on the current time

@@ -25,7 +25,7 @@ add_definitions(-D_MY_OPENGL_IS_33_)
 
 project(tpOpenGL)
 
-add_executable(${PROJECT_NAME} main.cpp Mesh.cpp Mesh.h Camera.cpp Camera.h utils.h)
+add_executable(${PROJECT_NAME} main.cpp Mesh.h Camera.cpp Camera.h utils.h)
 
 target_sources(${PROJECT_NAME} PRIVATE dep/glad/src/glad.c)
 target_include_directories(${PROJECT_NAME} PRIVATE dep/glad/include/)
