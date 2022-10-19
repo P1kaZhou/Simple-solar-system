@@ -35,6 +35,7 @@
 
 
 #include "Mesh.h"
+#include "utils.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 
@@ -45,12 +46,13 @@
 const static float kSizeSun = 1;
 const static float kSizeEarth = 0.5;
 const static float kSizeMoon = 0.25;
-const static float kRadOrbitEarth = 10;
-const static float kRadOrbitMoon = 2;
-const static float earthRevolutionSpeed = 2.0*M_PI/360.0;
-const static float moonRevolutionSPeed = 2.0*M_PI/360.0;
-const static float earthRotationSpeed = M_PI/360.0;
-const static float moonRotationSPeed = M_PI/360.0;
+const static float kRadOrbitEarth = 10.;
+const static float kRadOrbitMoon = 2.;
+
+const static float earthRevolutionSpeed = 30.0*2.0*M_PI/360.0;
+const static float moonRevolutionSpeed = 30.0*2.0*M_PI/360.0;
+const static float earthRotationSpeed = 30.0*M_PI/360.0;
+const static float moonRotationSpeed = 30.0 * M_PI / 360.0;
 
 
 // Window parameters
@@ -88,34 +90,6 @@ glm::mat4 g_sun, g_earth, g_moon;
 
 
 Camera g_camera;
-
-// Loads the content of an ASCII file in a standard C++ string
-std::string file2String(const std::string &filename) {
-    std::ifstream t(filename.c_str());
-    std::stringstream buffer;
-    buffer << t.rdbuf();
-    return buffer.str();
-}
-
-
-// Loads and compile a shader, before attaching it to a program
-void loadShader(GLuint program, GLenum type, const std::string &shaderFilename) {
-    GLuint shader = glCreateShader(
-            type); // Create the shader, e.g., a vertex shader to be applied to every single vertex of a meshSun
-    std::string shaderSourceString = file2String(shaderFilename); // Loads the shader source from a file to a C++ string
-    const GLchar *shaderSource = (const GLchar *) shaderSourceString.c_str(); // Interface the C++ string through a C pointer
-    glShaderSource(shader, 1, &shaderSource, NULL); // load the vertex shader code
-    glCompileShader(shader);
-    GLint success;
-    GLchar infoLog[512];
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cout << "ERROR in compiling " << shaderFilename << "\n\t" << infoLog << std::endl;
-    }
-    glAttachShader(program, shader);
-    glDeleteShader(shader);
-}
 
 GLuint loadTextureFromFileToGPU(const std::string &filename) {
     int width, height, numComponents;
@@ -233,9 +207,12 @@ void initCPUgeometry() {
     g_triangleIndices = {0, 1, 2};
     */
     // meshSun.initCPU();
-    meshSun.initCPU(32, kSizeSun, 0., 0., 0);
-    meshEarth.initCPU(32, kSizeEarth, 10., 0., 0.);
-    meshMoon.initCPU(32, kSizeMoon, 12., 0., 0.);
+    glm::vec3 sunRotation = glm::vec3(1.,0.,0.);
+    meshSun.initCPU(32, kSizeSun, 0., 0., 0., sunRotation);
+    glm::vec3 earthRotation = glm::vec3(cos(23.5*M_PI/180.),0.,sin(23.5*M_PI/180.));
+    meshEarth.initCPU(32, kSizeEarth, 10., 0., 0., earthRotation);
+    glm::vec3 moonRotation = glm::vec3(1.,0.,0.);
+    meshMoon.initCPU(32, kSizeMoon, 12., 0., 0., moonRotation);
 }
 
 
@@ -350,23 +327,23 @@ void render() {
 void update(const float currentTimeInSec) {
     // std::cout << currentTimeInSec << std::endl;
 
-    // Compute the needed movements
-    float x_earth = meshEarth.getPositionX();
-    float y_earth = meshEarth.getPositionY();
-
-    float x_moon = meshMoon.getPositionX();
-    float y_moon = meshMoon.getPositionY();
 
     //Compute the movement
-    int global_increment = meshEarth.getRevolutionProcess();
 
-    float future_earth_x = kRadOrbitEarth*cos(earthRevolutionSpeed*(earth_increment+1));
-    float future_earth_y = kRadOrbitEarth*sin(earthRevolutionSpeed*(earth_increment+1));
+    float future_earth_x = kRadOrbitEarth*cos(earthRevolutionSpeed*currentTimeInSec);
+    float future_earth_z = kRadOrbitEarth*sin(earthRevolutionSpeed*currentTimeInSec);
 
-    float earth_dx = future_earth_x - x_earth;
-    float earth_dy = future_earth_y - y_earth;
+    meshEarth.setX(future_earth_x);
+    meshEarth.setZ(future_earth_z);
 
+    float future_moon_x = kRadOrbitMoon*cos(moonRevolutionSpeed*currentTimeInSec) + future_earth_x;
+    float future_moon_z = kRadOrbitMoon*sin(moonRevolutionSpeed*currentTimeInSec) + future_earth_z;
 
+    meshMoon.setX(future_moon_x);
+    meshMoon.setZ(future_moon_z);
+
+    meshEarth.changeRotationAngle(earthRotationSpeed*currentTimeInSec);
+    meshMoon.changeRotationAngle(moonRotationSpeed * currentTimeInSec);
 }
 
 int main(int argc, char **argv) {

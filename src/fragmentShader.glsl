@@ -4,6 +4,7 @@ in vec3 fNormal;
 out vec4 Megacolor;	  // Shader output: color of this fragment
 uniform vec3 camPos;
 uniform vec3 color;
+
 in vec3 fPosition;
 
 void main() {
@@ -20,6 +21,8 @@ void main() {
 	vec3 ambient = color;
 	vec3 diffuse = kd*max(dot(n,l), 0)*(ambient*vec3(1.0,1.0,1.0));
 	vec3 specular = ks*pow(max(dot(v,l),0),alpha)*(ambient*vec3(1.0,1.0,1.0));
+
+
 	Megacolor = vec4(ambient + diffuse + specular, 1.0); // Building RGBA from RGB.
 
 }

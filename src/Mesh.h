@@ -36,6 +36,18 @@ public:
         glBindVertexArray(m_vao);     // activate the VAO storing geometry data
         glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT,
                        0); // Call for rendering: stream the current GPU geometry through the current GPU program
+        // MOVE
+
+        glm::vec4 vec(x, y, z, 1.0f);
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(x, y, z) );
+        trans = glm::scale(trans, glm::vec3(radius_multiplier, radius_multiplier, radius_multiplier));
+        trans = glm::rotate(trans, rotation_angle , rotation_axis);
+
+        glUniform4f(glGetUniformLocation(m_program, "position"), x, y, z, 1.0f);
+        glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(
+                trans));
+
     };
 
 
@@ -43,13 +55,17 @@ public:
                         float radius,
                         float x_center,
                         float y_center,
-                        float z_center) {
+                        float z_center,
+                        glm::vec3 rotation_axis) {
 
-        revolution_process = 0;
 
         this->x = x_center;
         this->y = y_center;
         this->z = z_center;
+
+        radius_multiplier = radius;
+        this->rotation_axis = rotation_axis;
+        this->rotation_angle = 0;
 
         float x, y, z, xy;                              // vertex position
         float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
@@ -58,6 +74,9 @@ public:
         float sectorStep = 2 * M_PI / resolution;
         float stackStep = M_PI / resolution;
         float sectorAngle, stackAngle;
+
+
+
 
         for (int i = 0; i <= resolution; ++i) {
             stackAngle = M_PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
@@ -197,15 +216,28 @@ public:
         return z;
     }
 
+    void changeRotationAngle(float angle){
+        this->rotation_angle = angle;
+    }
+
     void move(float dx, float dy, float dz) {
         x += dx;
         y += dy;
         z += dz;
     }
 
-    int getRevolutionProcess(){
-        return revolution_process;
+    void setX(float next){
+        this->x = next;
     }
+
+    void setY(float next){
+        this->y = next;
+    }
+
+    void setZ(float next){
+        this->z = next;
+    }
+
 
 
 private:
@@ -221,9 +253,14 @@ private:
     float x;
     float y;
     float z;
+    float radius_multiplier;
 
-    int revolution_process;
+    glm::vec3 rotation_axis;
+    float rotation_angle;
 
+    float next_x;
+    float next_y;
+    float next_z;
 
     GLuint m_vao = 0;
     GLuint m_posVbo = 0;
