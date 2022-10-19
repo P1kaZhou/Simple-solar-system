@@ -187,8 +187,8 @@ public:
         glGenBuffers(1, &m_ibo);
         glBindBuffer(GL_ARRAY_BUFFER, m_ibo);
         glBufferData(GL_ARRAY_BUFFER, indexBufferSize, m_triangleIndices.data(), GL_DYNAMIC_READ);
-        glVertexAttribPointer(2, 3, GL_INT, GL_FALSE, 3 * sizeof(GLint), 0);
-        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 3, GL_INT, GL_FALSE, 3 * sizeof(GLint), 0); // AAAAA
+        glEnableVertexAttribArray(2); // WHAT DO I PUT HERE
 
 
         glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
@@ -213,12 +213,14 @@ public:
         GLuint texID;
 
         glGenTextures(1, &texID); // generate an OpenGL texture container
+        // glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texID); // activate the texture
         // Setup the texture filtering option and repeat mode; check www.opengl.org for details.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
         glGenBuffers(1, &m_tbo);
         glBindBuffer(GL_ARRAY_BUFFER, m_tbo);
         glBufferData(GL_ARRAY_BUFFER, vertexTextureBufferSize, m_textureCoords.data(), GL_DYNAMIC_READ);
@@ -226,14 +228,14 @@ public:
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
         glEnableVertexAttribArray(2);
-        glUniform1i(glGetUniformLocation(m_program, "ourTexture"), texID);
-        textureInt = texID;
+        glUniform1i(glGetUniformLocation(m_program, "ourTexture"), texID); //?
+
         glDrawElements(GL_TRIANGLES, vertexTextureBufferSize, GL_UNSIGNED_INT, 0);
         // Free useless CPU memory
         stbi_image_free(data);
         glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
 
-
+        textureInt = texID;
     }
 
     void setColor(float r, float g, float b) {
