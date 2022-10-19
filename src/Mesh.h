@@ -245,34 +245,13 @@ public:
         this->b = b;
     }
 
-    float getPositionX() {
-        return x;
-    }
-
-    float getPositionY() {
-        return y;
-    }
-
-    float getPositionZ() {
-        return z;
-    }
-
     void changeRotationAngle(float angle){
         this->rotation_angle = angle;
     }
 
-    void move(float dx, float dy, float dz) {
-        x += dx;
-        y += dy;
-        z += dz;
-    }
 
     void setX(float next){
         this->x = next;
-    }
-
-    void setY(float next){
-        this->y = next;
     }
 
     void setZ(float next){
