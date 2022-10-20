@@ -26,7 +26,7 @@ public:
     void render(Camera g_camera) {
 
         glUseProgram(m_program);
-        setColor(r, g, b);
+        setColor(r, g, b); //Because the colors are soft "updated" at each loop
 
         const glm::mat4 viewMatrix = g_camera.computeViewMatrix();
         const glm::mat4 projMatrix = g_camera.computeProjectionMatrix();
@@ -50,11 +50,11 @@ public:
         glUniform4f(glGetUniformLocation(m_program, "position"), x, y, z, 1.0f);
         glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(trans));
 
+
         glActiveTexture(GL_TEXTURE0); // activate texture unit 0
         glBindTexture(GL_TEXTURE_2D, textureInt);
-        glBindVertexArray(m_tbo);
-        glDrawElements(GL_TRIANGLES, m_lineIndices.size(), GL_INT, 0); //todo: une histoire d'arguments + shaders
-
+        glBindVertexArray(m_vao); // What pointer lol
+        glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0); //todo: une histoire d'arguments + shaders
         // Line indices or textureCoords? Or triangleindices?
         // glDrawElements(GL_TRIANGLES, m_textureCoords.size(), GL_FLOAT, 0); // Arguments I put there?
 
@@ -159,8 +159,8 @@ public:
     } // should generate a unit sphere
 
     void initGPUGeometrySphere() {
-
         glGenVertexArrays(1, &m_vao);
+
         // If your system doesn't support OpenGL 4.5, you should use this instead of glCreateVertexArrays.
         glBindVertexArray(m_vao);
         // Generate a GPU buffer to store the positions of the vertices
@@ -212,7 +212,7 @@ public:
         GLuint texID;
 
         glGenTextures(1, &texID); // generate an OpenGL texture container
-        glActiveTexture(GL_TEXTURE0);
+        // glActiveTexture(GL_TEXTURE0); Idk about this one
         glBindTexture(GL_TEXTURE_2D, texID); // activate the texture
 
         // Setup the texture filtering option and repeat mode; check www.opengl.org for details.
@@ -228,6 +228,7 @@ public:
         glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
 
         textureInt = texID;
+
         // END OF TEXTURE LOADING FROM FILE TO GPU
 
         //Buffer initialization
@@ -240,7 +241,6 @@ public:
 
         // glGenerateMipmap(GL_TEXTURE_2D); IDK ABOUT THIS
 
-        // glUniform1i(glGetUniformLocation(m_program, "ourTexture"), texID); //?
         glUniform1i(glGetUniformLocation(m_program, "material.albedoTex"), 0);
 
         // glDrawElements(GL_TRIANGLES, vertexTextureBufferSize, GL_UNSIGNED_INT, 0);
