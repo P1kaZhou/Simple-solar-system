@@ -272,7 +272,7 @@ void render() {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    /*
+    /* The code for a single rendering
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Erase the color and z buffers.
 
     const glm::mat4 viewMatrix = g_camera.computeViewMatrix();
@@ -299,9 +299,10 @@ void render() {
                                    25.0 * std::sin(_theta) * std::cos(_phi),
                                    25.0 * std::cos(_theta)));
 
-    meshSun.render(g_camera, sunTexture);
-    meshEarth.render(g_camera, earthTexture);
-    meshMoon.render(g_camera, moonTexture);
+    meshSun.render(g_camera);
+    meshEarth.render(g_camera);
+    meshMoon.render(g_camera);
+
 }
 
 // Update any accessible variable based on the current time

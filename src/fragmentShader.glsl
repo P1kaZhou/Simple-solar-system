@@ -6,14 +6,21 @@ in vec2 TexCoord;
 
 uniform vec3 camPos;
 uniform vec3 color;
-uniform sampler2D ourTexture;
 
-out vec4 FragColor;
+// out vec3 FragColor;
 out vec4 Megacolor;	  // Shader output: color of this fragment
+
+struct Material {
+// ...
+	sampler2D albedoTex;
+};
+uniform Material material;
 
 
 
 	void main() {
+
+		vec3 FragColor = texture(material.albedoTex, TexCoord).rgb; // ?
 
 		float kd = 0.7;
 		float alpha = 0.6;
@@ -28,7 +35,6 @@ out vec4 Megacolor;	  // Shader output: color of this fragment
 		vec3 diffuse = kd*max(dot(n,l), 0)*(ambient*vec3(1.0,1.0,1.0));
 		vec3 specular = ks*pow(max(dot(v,l),0),alpha)*(ambient*vec3(1.0,1.0,1.0));
 
-
 		Megacolor = vec4(ambient + diffuse + specular, 1.0); // Building RGBA from RGB.
-		FragColor = texture(ourTexture, TexCoord);
+
 	}

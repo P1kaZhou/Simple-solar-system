@@ -23,11 +23,11 @@ class Mesh {
 public:
     void init(); // should properly set up the geometry buffer
 
-    void render(Camera g_camera, std::string texture) {
+    void render(Camera g_camera) {
 
-        // Erase the color and z buffers.
         glUseProgram(m_program);
         setColor(r, g, b);
+
         const glm::mat4 viewMatrix = g_camera.computeViewMatrix();
         const glm::mat4 projMatrix = g_camera.computeProjectionMatrix();
         const glm::vec3 camPosition = g_camera.getPosition();
@@ -53,8 +53,11 @@ public:
         glActiveTexture(GL_TEXTURE0); // activate texture unit 0
         glBindTexture(GL_TEXTURE_2D, textureInt);
         glBindVertexArray(m_tbo);
-        // glDrawElements(GL_SPHERE_MAP, m_textureCoords.size(), GL_FLOAT, 0); // Arguments I put there?
-        glDrawElements(GL_SPHERE_MAP, m_lineIndices.size(), GL_INT, 0); //todo: une histoire d'arguments + shaders
+        glDrawElements(GL_TRIANGLES, m_lineIndices.size(), GL_INT, 0); //todo: une histoire d'arguments + shaders
+
+        // Line indices or textureCoords? Or triangleindices?
+        // glDrawElements(GL_TRIANGLES, m_textureCoords.size(), GL_FLOAT, 0); // Arguments I put there?
+
 
     };
 
@@ -70,7 +73,7 @@ public:
         this->y = y_center;
         this->z = z_center;
 
-        radius_multiplier = radius;
+        this->radius_multiplier = radius;
         this->rotation_axis = rotation_axis;
         this->rotation_angle = 0;
 
@@ -161,8 +164,8 @@ public:
         // If your system doesn't support OpenGL 4.5, you should use this instead of glCreateVertexArrays.
         glBindVertexArray(m_vao);
         // Generate a GPU buffer to store the positions of the vertices
-        size_t vertexBufferSize =
-                sizeof(float) * m_vertexPositions.size(); // Gather the size of the buffer from the CPU-side vector
+        size_t vertexBufferSize = sizeof(float) * m_vertexPositions.size();
+        // Gather the size of the buffer from the CPU-side vector
         size_t vertexColorBufferSize = sizeof(float) * m_vertexNormals.size();
 
         glGenBuffers(1, &m_posVbo);
@@ -177,8 +180,7 @@ public:
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
         glEnableVertexAttribArray(1);
 
-        // Same for an index buffer object that stores the list of indices of the
-        // triangles forming the mesh
+        // Same for an index buffer object that stores the list of indices of the triangles forming the mesh
         size_t indexBufferSize = sizeof(unsigned int) * m_triangleIndices.size();
         glGenBuffers(1, &m_ibo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
@@ -192,11 +194,12 @@ public:
 
     void initGPUProgram(std::string texture) {
 
-        size_t vertexTextureBufferSize = sizeof(float) * m_textureCoords.size();
         m_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
         loadShader(m_program, GL_VERTEX_SHADER, "vertexShader.glsl");
         loadShader(m_program, GL_FRAGMENT_SHADER, "fragmentShader.glsl");
         glLinkProgram(m_program); // The main GPU program is ready to be handle streams of polygons
+
+        // loadTextureFromFileToGPU(le path to le texture):
 
         int width, height, numComponents;
         // Loading the image in CPU memory using stb_image
@@ -212,32 +215,36 @@ public:
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texID); // activate the texture
 
-
         // Setup the texture filtering option and repeat mode; check www.opengl.org for details.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-        glGenBuffers(1, &m_tbo);
-        glBindBuffer(GL_ARRAY_BUFFER, m_tbo);
-        glBufferData(GL_ARRAY_BUFFER, vertexTextureBufferSize, m_textureCoords.data(), GL_DYNAMIC_READ);
-
         // Fill the GPU texture with the data stored in the CPU image
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), 0);
-        glEnableVertexAttribArray(2);
-
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glUniform1i(glGetUniformLocation(m_program, "ourTexture"), texID); //?
-
-        glDrawElements(GL_TRIANGLES, vertexTextureBufferSize, GL_UNSIGNED_INT, 0);
         // Free useless CPU memory
         stbi_image_free(data);
         glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
 
         textureInt = texID;
+        // END OF TEXTURE LOADING FROM FILE TO GPU
+
+        //Buffer initialization
+        size_t vertexTextureBufferSize = sizeof(float) * m_textureCoords.size();
+        glGenBuffers(1, &m_tbo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_tbo);
+        glBufferData(GL_ARRAY_BUFFER, vertexTextureBufferSize, m_textureCoords.data(), GL_DYNAMIC_READ);
+        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), 0); // todo: what do I put here as well
+        glEnableVertexAttribArray(2);
+
+        // glGenerateMipmap(GL_TEXTURE_2D); IDK ABOUT THIS
+
+        // glUniform1i(glGetUniformLocation(m_program, "ourTexture"), texID); //?
+        glUniform1i(glGetUniformLocation(m_program, "material.albedoTex"), 0);
+
+        // glDrawElements(GL_TRIANGLES, vertexTextureBufferSize, GL_UNSIGNED_INT, 0);
+
 
     }
 

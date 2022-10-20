@@ -10,10 +10,12 @@ in vec4 position;
 
 out vec2 TexCoord;
 out vec3 fNormal;
+out vec3 fPosition; // useful?
 
 void main() {
     gl_Position = projMat * viewMat * trans * position; // mandatory to rasterize properly
 
     fNormal = vNormal;
     TexCoord = aTexCoord;
+    fPosition = position.xyz;
 }
