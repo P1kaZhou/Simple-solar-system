@@ -44,10 +44,10 @@ const static float kSizeMoon = 0.25;
 const static float kRadOrbitEarth = 10.;
 const static float kRadOrbitMoon = 2.;
 
-const static float earthRevolutionSpeed = 30.0*2.0*M_PI/360.0;
-const static float moonRevolutionSpeed = 30.0*2.0*M_PI/360.0;
-const static float earthRotationSpeed = 30.0*M_PI/360.0;
-const static float moonRotationSpeed = 30.0 * M_PI / 360.0;
+const static float earthRevolutionSpeed = 30.0 * M_PI / 360.0; // Orbital period of Earth
+const static float moonRevolutionSpeed = 30.0 * 4.0 * M_PI / 360.0;
+const static float earthRotationSpeed = 30.0 * 2.0 * M_PI / 360.0;
+const static float moonRotationSpeed = 30.0 * 4.0 * M_PI / 360.0;
 
 
 // Window parameters
@@ -56,17 +56,12 @@ GLFWwindow *g_window = nullptr;
 // GPU objects
 GLuint g_program = 0; // A GPU program contains at least a vertex shader and a fragment shader
 
-// OpenGL identifiers
-GLuint g_vao = 0;
-GLuint g_posVbo = 0;
-GLuint g_colVbo = 0;
-GLuint g_ibo = 0;
-
 // Textures
 const std::string sunTexture = "media/earth.jpg";
 const std::string earthTexture = "media/moon.jpg";
 const std::string moonTexture = "media/sun.jpg";
 
+/* Single triangle stuff
 // All vertex positions packed in one array [x0, y0, z0, x1, y1, z1, ...]
 std::vector<float> g_vertexPositions;
 // All triangle indices packed in one array [v00, v01, v02, v10, v11, v12, ...] with vij the index of j-th vertex of the i-th triangle
@@ -74,6 +69,12 @@ std::vector<unsigned int> g_triangleIndices;
 
 //Colors
 std::vector<float> g_vertexColors;
+// OpenGL identifiers
+GLuint g_vao = 0;
+GLuint g_posVbo = 0;
+GLuint g_colVbo = 0;
+GLuint g_ibo = 0;
+*/
 
 //Mesh initialization
 Mesh meshSun;
@@ -86,7 +87,7 @@ float _phi;
 // Basic camera model
 
 // Model transformation matrices
-glm::mat4 g_sun, g_earth, g_moon;
+// glm::mat4 g_sun, g_earth, g_moon;
 
 
 Camera g_camera;
@@ -162,11 +163,11 @@ void initOpenGL() {
 
 void initGPUprogram() {
     meshSun.initGPUProgram(sunTexture);
-    meshSun.setColor(1.0,1.0,0.0);
+    meshSun.setColor(1.0, 1.0, 0.0);
     meshEarth.initGPUProgram(earthTexture);
-    meshEarth.setColor(0.0,1.0,0.0);
+    meshEarth.setColor(0.0, 1.0, 0.0);
     meshMoon.initGPUProgram(moonTexture);
-    meshMoon.setColor(0.0,0.0,1.0);
+    meshMoon.setColor(0.0, 0.0, 1.0);
 }
 
 // Define your meshSun(es) in the CPU memory
@@ -186,11 +187,11 @@ void initCPUgeometry() {
 
     g_triangleIndices = {0, 1, 2};
     */
-    glm::vec3 sunRotation = glm::vec3(1.,0.,0.);
+    glm::vec3 sunRotation = glm::vec3(1., 0., 0.);
     meshSun.initCPU(32, kSizeSun, 0., 0., 0., sunRotation);
-    glm::vec3 earthRotation = glm::vec3(cos(23.5*M_PI/180.),0.,sin(23.5*M_PI/180.));
+    glm::vec3 earthRotation = glm::vec3(cos(23.5 * M_PI / 180.), 0., sin(23.5 * M_PI / 180.));
     meshEarth.initCPU(32, kSizeEarth, 10., 0., 0., earthRotation);
-    glm::vec3 moonRotation = glm::vec3(1.,0.,0.);
+    glm::vec3 moonRotation = glm::vec3(1., 0., 0.);
     meshMoon.initCPU(32, kSizeMoon, 12., 0., 0., moonRotation);
 }
 
@@ -310,19 +311,20 @@ void update(const float currentTimeInSec) {
 
     //Compute the movement
 
-    float future_earth_x = kRadOrbitEarth*cos(earthRevolutionSpeed*currentTimeInSec);
-    float future_earth_z = kRadOrbitEarth*sin(earthRevolutionSpeed*currentTimeInSec);
+    float future_earth_x = kRadOrbitEarth * cos(earthRevolutionSpeed * currentTimeInSec);
+    float future_earth_z = kRadOrbitEarth * sin(earthRevolutionSpeed * currentTimeInSec);
 
     meshEarth.setX(future_earth_x);
     meshEarth.setZ(future_earth_z);
 
-    float future_moon_x = kRadOrbitMoon*cos(moonRevolutionSpeed*currentTimeInSec) + future_earth_x;
-    float future_moon_z = kRadOrbitMoon*sin(moonRevolutionSpeed*currentTimeInSec) + future_earth_z;
+    float future_moon_x = kRadOrbitMoon * cos(moonRevolutionSpeed * currentTimeInSec) + future_earth_x;
+    float future_moon_z = kRadOrbitMoon * sin(moonRevolutionSpeed * currentTimeInSec) + future_earth_z;
+    // Always relative to the Earth
 
     meshMoon.setX(future_moon_x);
     meshMoon.setZ(future_moon_z);
 
-    meshEarth.changeRotationAngle(earthRotationSpeed*currentTimeInSec);
+    meshEarth.changeRotationAngle(earthRotationSpeed * currentTimeInSec);
     meshMoon.changeRotationAngle(moonRotationSpeed * currentTimeInSec);
 }
 

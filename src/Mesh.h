@@ -15,6 +15,7 @@
 #include <glm/ext.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
+
 #include "stb_image.h"
 #include "utils.h"
 
@@ -36,15 +37,15 @@ public:
         glUniformMatrix4fv(glGetUniformLocation(m_program, "projMat"), 1, GL_FALSE, glm::value_ptr(
                 projMatrix)); // compute the projection matrix of the camera and pass it to the GPU program
         glBindVertexArray(m_vao);     // activate the VAO storing geometry data
-        glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0); // <-- this line is the issue
+        glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0);
         // Call for rendering: stream the current GPU geometry through the current GPU program
 
         // MOVE
         glm::vec4 vec(x, y, z, 1.0f);
         glm::mat4 trans = glm::mat4(1.0f);
-        trans = glm::translate(trans, glm::vec3(x, y, z) );
+        trans = glm::translate(trans, glm::vec3(x, y, z));
         trans = glm::scale(trans, glm::vec3(radius_multiplier, radius_multiplier, radius_multiplier));
-        trans = glm::rotate(trans, rotation_angle , rotation_axis);
+        trans = glm::rotate(trans, rotation_angle, rotation_axis);
 
         glUniform4f(glGetUniformLocation(m_program, "position"), x, y, z, 1.0f);
         glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(trans));
@@ -52,9 +53,8 @@ public:
         glActiveTexture(GL_TEXTURE0); // activate texture unit 0
         glBindTexture(GL_TEXTURE_2D, textureInt);
         glBindVertexArray(m_tbo);
-        glDrawElements(GL_TRIANGLES, m_lineIndices.size(), GL_UNSIGNED_INT, 0);
-
-        // glUniform1i(glGetUniformLocation(m_program, "ourTexture"), textureInt);
+        // glDrawElements(GL_SPHERE_MAP, m_textureCoords.size(), GL_FLOAT, 0); // Arguments I put there?
+        glDrawElements(GL_SPHERE_MAP, m_lineIndices.size(), GL_INT, 0); //todo: une histoire d'arguments + shaders
 
     };
 
@@ -108,8 +108,8 @@ public:
                 m_vertexNormals.push_back(nz);
 
                 // vertex tex coord (s, t) range between [0, 1]
-                s = (float)j / resolution;
-                t = (float)i / resolution;
+                s = (float) j / resolution;
+                t = (float) i / resolution;
                 m_textureCoords.push_back(s);
                 m_textureCoords.push_back(t);
             }
@@ -132,14 +132,14 @@ public:
                 if (i != 0) {
                     m_triangleIndices.push_back(k1);
                     m_triangleIndices.push_back(k2);
-                    m_triangleIndices.push_back(k1+1);
+                    m_triangleIndices.push_back(k1 + 1);
                 }
 
                 // k1+1 => k2 => k2+1
                 if (i != (resolution - 1)) {
-                    m_triangleIndices.push_back(k1+1);
+                    m_triangleIndices.push_back(k1 + 1);
                     m_triangleIndices.push_back(k2);
-                    m_triangleIndices.push_back(k2+1);
+                    m_triangleIndices.push_back(k2 + 1);
                 }
 
                 // store indices for lines
@@ -149,7 +149,7 @@ public:
                 if (i != 0)  // horizontal lines except 1st stack, k1 => k+1
                 {
                     m_lineIndices.push_back(k1);
-                    m_lineIndices.push_back(k1+1);
+                    m_lineIndices.push_back(k1 + 1);
                 }
             }
         }
@@ -238,6 +238,7 @@ public:
         glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
 
         textureInt = texID;
+
     }
 
     void setColor(float r, float g, float b) {
@@ -247,20 +248,17 @@ public:
         this->b = b;
     }
 
-    void changeRotationAngle(float angle){
+    void changeRotationAngle(float angle) {
         this->rotation_angle = angle;
     }
 
-
-    void setX(float next){
+    void setX(float next) {
         this->x = next;
     }
 
-    void setZ(float next){
+    void setZ(float next) {
         this->z = next;
     }
-
-
 
 private:
     std::vector<float> m_vertexPositions;
@@ -270,27 +268,24 @@ private:
     std::vector<int> m_lineIndices;
     GLuint m_program;
 
-    float r;
-    float g;
-    float b;
-    float x;
-    float y;
-    float z;
+    float r; // Red
+    float g; // Green
+    float b; // Blue
+    float x; // x coordinate
+    float y; // y coordinate
+    float z; // z coordinate
     float radius_multiplier;
     GLuint textureInt;
 
     glm::vec3 rotation_axis;
     float rotation_angle;
 
-
     GLuint m_vao = 0;
     GLuint m_posVbo = 0;
     GLuint m_normalVbo = 0;
-    GLuint m_ibo = 0;
-    GLuint m_tbo =0;
-
+    GLuint m_ibo = 0;  // Index buffer object
+    GLuint m_tbo = 0; // Texture buffer object
 
 };
-
 
 #endif //TPOPENGL_MESH_H
