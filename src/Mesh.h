@@ -23,6 +23,8 @@ public:
     void init(); // should properly set up the geometry buffer
 
     void render(Camera g_camera, std::string texture) {
+
+        std::cout << "Any renderers" << std::endl;
         // Erase the color and z buffers.
         glUseProgram(m_program);
         setColor(r, g, b);
@@ -50,7 +52,7 @@ public:
         glActiveTexture(GL_TEXTURE0); // activate texture unit 0
         glBindTexture(GL_TEXTURE_2D, textureInt);
         // glUniform1i(glGetUniformLocation(m_program, "ourTexture"), textureInt);
-
+        std::cout << "end of render gaming" << std::endl;
     };
 
 
@@ -148,8 +150,6 @@ public:
                 }
             }
         }
-        std::cout << "Voilà" << std::endl;
-
     } // should generate a unit sphere
 
     void initGPUGeometrySphere() {
@@ -183,13 +183,15 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, m_ibo);
         glBufferData(GL_ARRAY_BUFFER, indexBufferSize, m_triangleIndices.data(), GL_DYNAMIC_READ);
         // glVertexAttribPointer(2, 3, GL_INT, GL_FALSE, 3 * sizeof(GLuint), 0); // AAAAA
-        // glEnableVertexAttribArray(2); // WHAT DO I PUT HERE
+        // glEnableVertexAttribArray(2); // WHAT DO I PUT HERE (probs nothing tbf)
 
 
         glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
     }
 
     void initGPUProgram(std::string texture) {
+
+        std::cout << "DEBUT INIT GPU PROGRAM" << std::endl;
 
         size_t vertexTextureBufferSize = sizeof(float) * m_textureCoords.size();
         m_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
@@ -238,6 +240,8 @@ public:
         glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
 
         textureInt = texID;
+
+        std::cout << "FIN INIT GPU PROGRAM" << std::endl;
     }
 
     void setColor(float r, float g, float b) {
