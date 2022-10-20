@@ -24,7 +24,6 @@ public:
 
     void render(Camera g_camera, std::string texture) {
 
-        std::cout << "Any renderers" << std::endl;
         // Erase the color and z buffers.
         glUseProgram(m_program);
         setColor(r, g, b);
@@ -37,10 +36,10 @@ public:
         glUniformMatrix4fv(glGetUniformLocation(m_program, "projMat"), 1, GL_FALSE, glm::value_ptr(
                 projMatrix)); // compute the projection matrix of the camera and pass it to the GPU program
         glBindVertexArray(m_vao);     // activate the VAO storing geometry data
-        glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT,
-                       0); // Call for rendering: stream the current GPU geometry through the current GPU program
-        // MOVE
+        glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0); // <-- this line is the issue
+        // Call for rendering: stream the current GPU geometry through the current GPU program
 
+        // MOVE
         glm::vec4 vec(x, y, z, 1.0f);
         glm::mat4 trans = glm::mat4(1.0f);
         trans = glm::translate(trans, glm::vec3(x, y, z) );
@@ -49,10 +48,14 @@ public:
 
         glUniform4f(glGetUniformLocation(m_program, "position"), x, y, z, 1.0f);
         glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(trans));
+
         glActiveTexture(GL_TEXTURE0); // activate texture unit 0
         glBindTexture(GL_TEXTURE_2D, textureInt);
+        glBindVertexArray(m_tbo);
+        glDrawElements(GL_TRIANGLES, m_lineIndices.size(), GL_UNSIGNED_INT, 0);
+
         // glUniform1i(glGetUniformLocation(m_program, "ourTexture"), textureInt);
-        std::cout << "end of render gaming" << std::endl;
+
     };
 
 
@@ -92,17 +95,17 @@ public:
                 // vertex position (x, y, z)
                 x = xy * cosf(sectorAngle);             // r * cos(u) * cos(v)
                 y = xy * sinf(sectorAngle);             // r * cos(u) * sin(v)
-                this->addPositionCoordinate(x + x_center);
-                this->addPositionCoordinate(y + y_center);
-                this->addPositionCoordinate(z + z_center);
+                m_vertexPositions.push_back(x + x_center);
+                m_vertexPositions.push_back(y + y_center);
+                m_vertexPositions.push_back(z + z_center);
 
                 // normalized vertex normal (nx, ny, nz)
                 nx = (x - x_center) * lengthInv;
                 ny = (y - y_center) * lengthInv;
                 nz = (z - z_center) * lengthInv;
-                this->addNormalCoordinate(nx);
-                this->addNormalCoordinate(ny);
-                this->addNormalCoordinate(nz);
+                m_vertexNormals.push_back(nx);
+                m_vertexNormals.push_back(ny);
+                m_vertexNormals.push_back(nz);
 
                 // vertex tex coord (s, t) range between [0, 1]
                 s = (float)j / resolution;
@@ -127,26 +130,26 @@ public:
                 // 2 triangles per sector excluding first and last stacks
                 // k1 => k2 => k1+1
                 if (i != 0) {
-                    this->addTriangleCoordinate(k1);
-                    this->addTriangleCoordinate(k2);
-                    this->addTriangleCoordinate(k1 + 1);
+                    m_triangleIndices.push_back(k1);
+                    m_triangleIndices.push_back(k2);
+                    m_triangleIndices.push_back(k1+1);
                 }
 
                 // k1+1 => k2 => k2+1
                 if (i != (resolution - 1)) {
-                    this->addTriangleCoordinate(k1 + 1);
-                    this->addTriangleCoordinate(k2);
-                    this->addTriangleCoordinate(k2 + 1);
+                    m_triangleIndices.push_back(k1+1);
+                    m_triangleIndices.push_back(k2);
+                    m_triangleIndices.push_back(k2+1);
                 }
 
                 // store indices for lines
                 // vertical lines for all stacks, k1 => k2
-                this->addLineIndice(k1);
-                this->addLineIndice(k2);
+                m_lineIndices.push_back(k1);
+                m_lineIndices.push_back(k2);
                 if (i != 0)  // horizontal lines except 1st stack, k1 => k+1
                 {
-                    this->addLineIndice(k1);
-                    this->addLineIndice(k1 + 1);
+                    m_lineIndices.push_back(k1);
+                    m_lineIndices.push_back(k1+1);
                 }
             }
         }
@@ -174,24 +177,20 @@ public:
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
         glEnableVertexAttribArray(1);
 
-
-        // todo: ??????
         // Same for an index buffer object that stores the list of indices of the
-        // triangles forming the meshSun
+        // triangles forming the mesh
         size_t indexBufferSize = sizeof(unsigned int) * m_triangleIndices.size();
         glGenBuffers(1, &m_ibo);
-        glBindBuffer(GL_ARRAY_BUFFER, m_ibo);
-        glBufferData(GL_ARRAY_BUFFER, indexBufferSize, m_triangleIndices.data(), GL_DYNAMIC_READ);
-        // glVertexAttribPointer(2, 3, GL_INT, GL_FALSE, 3 * sizeof(GLuint), 0); // AAAAA
-        // glEnableVertexAttribArray(2); // WHAT DO I PUT HERE (probs nothing tbf)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferSize, m_triangleIndices.data(), GL_DYNAMIC_READ);
+        // glVertexAttribPointer(2, 3, GL_INT, GL_FALSE, 3 * sizeof(GLuint), 0);
+        // glEnableVertexAttribArray(2); // Probs nothing instead
 
 
         glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
     }
 
     void initGPUProgram(std::string texture) {
-
-        std::cout << "DEBUT INIT GPU PROGRAM" << std::endl;
 
         size_t vertexTextureBufferSize = sizeof(float) * m_textureCoords.size();
         m_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
@@ -210,7 +209,7 @@ public:
         GLuint texID;
 
         glGenTextures(1, &texID); // generate an OpenGL texture container
-        // glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texID); // activate the texture
 
 
@@ -231,8 +230,7 @@ public:
 
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        // glUniform1i(glGetUniformLocation(m_program, "ourTexture"), texID); //?
-        // glUniform1i(glGetUniformLocation(m_program, "material.albedoTex"), 0); // texture unit 0
+        glUniform1i(glGetUniformLocation(m_program, "ourTexture"), texID); //?
 
         glDrawElements(GL_TRIANGLES, vertexTextureBufferSize, GL_UNSIGNED_INT, 0);
         // Free useless CPU memory
@@ -240,8 +238,6 @@ public:
         glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
 
         textureInt = texID;
-
-        std::cout << "FIN INIT GPU PROGRAM" << std::endl;
     }
 
     void setColor(float r, float g, float b) {
@@ -293,21 +289,6 @@ private:
     GLuint m_ibo = 0;
     GLuint m_tbo =0;
 
-    void addPositionCoordinate(float x) {
-        m_vertexPositions.push_back(x);
-    }
-
-    void addNormalCoordinate(float x) {
-        m_vertexNormals.push_back(x);
-    }
-
-    void addTriangleCoordinate(unsigned int x) {
-        m_triangleIndices.push_back(x);
-    }
-
-    void addLineIndice(int x) {
-        m_lineIndices.push_back(x);
-    }
 
 };
 
