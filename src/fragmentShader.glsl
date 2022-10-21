@@ -5,6 +5,7 @@ in vec3 fPosition;
 in vec2 TexCoord;
 
 uniform vec3 camPos;
+uniform vec3 diffuseColor;
 
 
 // out vec3 FragColor;
@@ -34,5 +35,4 @@ void main() {
 	vec3 specular = ks*pow(max(dot(v,l),0),alpha)*(ambient);
 
 	color = vec4(ambient + diffuse + specular, 1.0); // Building RGBA from RGB.
-
 }

@@ -36,11 +36,6 @@ public:
                 viewMatrix)); // compute the view matrix of the camera and pass it to the GPU program
         glUniformMatrix4fv(glGetUniformLocation(m_program, "projMat"), 1, GL_FALSE, glm::value_ptr(
                 projMatrix)); // compute the projection matrix of the camera and pass it to the GPU program
-        glBindVertexArray(m_vao);     // activate the VAO storing geometry data
-        glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0);
-        // Call for rendering: stream the current GPU geometry through the current GPU program
-
-        // MOVE
         glm::vec4 vec(x, y, z, 1.0f);
         glm::mat4 trans = glm::mat4(1.0f);
         trans = glm::translate(trans, glm::vec3(x, y, z));
@@ -49,13 +44,16 @@ public:
 
         glUniform4f(glGetUniformLocation(m_program, "position"), x, y, z, 1.0f);
         glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(trans));
+        glBindVertexArray(m_vao);     // activate the VAO storing geometry data
+        glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0);
+        // Call for rendering: stream the current GPU geometry through the current GPU program
+
+        // MOVE
 
 
-        // glActiveTexture(GL_TEXTURE0); // activate texture unit 0
-        // glBindTexture(GL_TEXTURE_2D, textureInt);
+        glActiveTexture(GL_TEXTURE0); // activate texture unit 0
+        glBindTexture(GL_TEXTURE_2D, textureInt);
         // Line indices or textureCoords? Or triangleindices?
-        // glDrawElements(GL_TRIANGLES, m_textureCoords.size(), GL_FLOAT, 0); // Arguments I put there?
-
 
     };
 
@@ -79,8 +77,8 @@ public:
         float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
         float s, t;                                     // vertex texCoord
 
-        float sectorStep = 2 * M_PI / resolution;
-        float stackStep = M_PI / resolution;
+        float sectorStep = 2 * M_PI / (float) resolution;
+        float stackStep = M_PI / (float) resolution;
         float sectorAngle, stackAngle;
 
         for (int i = 0; i <= resolution; ++i) {
@@ -108,9 +106,10 @@ public:
                 m_vertexNormals.push_back(ny);
                 m_vertexNormals.push_back(nz);
 
+
                 // vertex tex coord (s, t) range between [0, 1]
-                s = (float) j / resolution;
-                t = (float) i / resolution;
+                s = j / (float) resolution;
+                t = i / (float) resolution;
                 m_textureCoords.push_back(s);
                 m_textureCoords.push_back(t);
             }
@@ -178,53 +177,42 @@ public:
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
         glEnableVertexAttribArray(1);
 
-        // size_t vertexTextureBufferSize = sizeof(float) * m_textureCoords.size();
-        // glGenBuffers(1, &m_tbo);
-        // glBindBuffer(GL_ARRAY_BUFFER, m_tbo);
-        // glBufferData(GL_ARRAY_BUFFER, vertexTextureBufferSize, m_textureCoords.data(), GL_DYNAMIC_READ);
-        // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), 0); // todo: what do I put here as well
-        // glEnableVertexAttribArray(2);
+        size_t vertexTextureBufferSize = sizeof(float) * m_textureCoords.size();
+        glGenBuffers(1, &m_tbo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_tbo);
+        glBufferData(GL_ARRAY_BUFFER, vertexTextureBufferSize, m_textureCoords.data(), GL_DYNAMIC_READ);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), 0); // todo: what do I put here as well
+        glEnableVertexAttribArray(2);
 
         // Same for an index buffer object that stores the list of indices of the triangles forming the mesh
         size_t indexBufferSize = sizeof(unsigned int) * m_triangleIndices.size();
         glGenBuffers(1, &m_ibo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferSize, m_triangleIndices.data(), GL_DYNAMIC_READ);
-        // glVertexAttribPointer(2, 3, GL_INT, GL_FALSE, 3 * sizeof(GLuint), 0);
-        // glEnableVertexAttribArray(2); // Probs nothing instead
 
 
         glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
     }
 
-    void loadTextureFromFileToGPU(std::string texture){
-        int width, height, numComponents;
+    void loadTextureFromFileToGPU(std::string texture) {
         // Loading the image in CPU memory using stb_image
-        unsigned char *data = stbi_load(
-                texture.c_str(),
-                &width, &height,
-                &numComponents, // 1 for an 8 bit grey-scale image, 3 for 24bits RGB image, 4 for 32bits RGBA image
-                0);
-
-        GLuint texID;
-
+        int width, height, numComponents;
+        unsigned char *data = stbi_load(texture.c_str(), &width, &height, &numComponents, 0);
+        GLuint texID; // OpenGL texture identifier
         glGenTextures(1, &texID); // generate an OpenGL texture container
-        // glActiveTexture(GL_TEXTURE0); Idk about this one
         glBindTexture(GL_TEXTURE_2D, texID); // activate the texture
-
-        // Setup the texture filtering option and repeat mode; check www.opengl.org for details.
+// Setup the texture filtering option and repeat mode; check www.opengl.org for details.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        // Fill the GPU texture with the data stored in the CPU image
+// Fill the GPU texture with the data stored in the CPU image
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        // Free useless CPU memory
+// Free useless CPU memory
         stbi_image_free(data);
         glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
 
-        textureInt = texID;
+        textureInt = texID; // = return texID
     }
 
     void initGPUProgram(std::string texture) {
@@ -236,19 +224,12 @@ public:
 
         loadTextureFromFileToGPU(texture);
 
-        // END OF TEXTURE LOADING FROM FILE TO GPU
-
-        // glGenerateMipmap(GL_TEXTURE_2D); IDK ABOUT THIS
-
         glUniform1i(glGetUniformLocation(m_program, "material.albedoTex"), 0);
-
-        // glDrawElements(GL_TRIANGLES, vertexTextureBufferSize, GL_UNSIGNED_INT, 0);
-
 
     }
 
     void setColor(float r, float g, float b) {
-        glUniform3f(glGetUniformLocation(m_program, "color"), r, g, b);
+        glUniform3f(glGetUniformLocation(m_program, "diffuseColor"), r, g, b);
         this->r = r;
         this->g = g;
         this->b = b;
@@ -290,7 +271,7 @@ private:
     GLuint m_posVbo = 0;
     GLuint m_normalVbo = 0;
     GLuint m_ibo = 0;  // Index buffer object
-    GLuint m_tbo = 0; // Texture buffer object
+    GLuint m_tbo = 0;
 
 };
 

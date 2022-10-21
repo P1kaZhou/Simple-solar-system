@@ -6,11 +6,12 @@ layout (location = 1) in vec3 vNormal;
 layout (location = 2) in vec2 aTexCoord;
 
 uniform mat4 viewMat, projMat, trans;
-in vec4 position;
+in vec4 position; // UNIFORM OR IN
 
 out vec2 TexCoord;
 out vec3 fNormal;
 out vec3 fPosition; // useful?
+
 
 void main() {
     gl_Position = projMat * viewMat * trans * position; // mandatory to rasterize properly
