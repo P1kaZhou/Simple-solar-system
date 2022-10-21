@@ -21,12 +21,11 @@
 
 class Mesh {
 public:
-    void init(); // should properly set up the geometry buffer
 
     void render(Camera g_camera) {
 
         glUseProgram(m_program);
-        setColor(r, g, b); //Because the colors are soft "updated" at each loop
+        setColor(r, g, b);
 
         const glm::mat4 viewMatrix = g_camera.computeViewMatrix();
         const glm::mat4 projMatrix = g_camera.computeProjectionMatrix();
@@ -44,15 +43,15 @@ public:
 
         glUniform4f(glGetUniformLocation(m_program, "position"), x, y, z, 1.0f);
         glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(trans));
-
-        glActiveTexture(GL_TEXTURE0); // activate texture unit 0
-        glBindTexture(GL_TEXTURE_2D, textureInt);
         glBindVertexArray(m_vao);     // activate the VAO storing geometry data
         glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0);
         // Call for rendering: stream the current GPU geometry through the current GPU program
+
+        glActiveTexture(GL_TEXTURE0); // activate texture unit 0
+        glBindTexture(GL_TEXTURE_2D, textureInt);
     };
 
-
+    // Initialize the vectors needed for each mesh (position, normals, texture, indexes)
     inline void initCPU(const size_t resolution,
                         float radius,
                         float x_center,
@@ -149,6 +148,7 @@ public:
         }
     } // should generate a unit sphere
 
+    // Initialize the vertex buffer objects
     void initGPUGeometrySphere() {
         glGenVertexArrays(1, &m_vao);
 
@@ -188,6 +188,7 @@ public:
         glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
     }
 
+    // Since the load texture from file to gpu is only needed there, it's written there
     void loadTextureFromFileToGPU(std::string texture) {
         // Loading the image in CPU memory using stb_image
         int width, height, numComponents;
@@ -210,6 +211,7 @@ public:
 
     }
 
+    // Init the program, the shaders, as well as the texture that will be used for each mesh
     void initGPUProgram(std::string texture) {
 
         m_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
@@ -223,6 +225,7 @@ public:
 
     }
 
+    // Set the ambiant color
     void setColor(float r, float g, float b) {
         glUniform3f(glGetUniformLocation(m_program, "diffuseColor"), r, g, b);
         this->r = r;
@@ -230,25 +233,32 @@ public:
         this->b = b;
     }
 
+    // Rotates a sphere (cf render and main)
     void changeRotationAngle(float angle) {
         this->rotation_angle = angle;
     }
 
+    //Moves the x coordinate
     void setX(float next) {
         this->x = next;
     }
 
+    //Moves the z coordinate
     void setZ(float next) {
         this->z = next;
     }
 
+    void setSun(bool isSun){
+        this->isSun = isSun;
+    }
+
 private:
-    std::vector<float> m_vertexPositions;
-    std::vector<float> m_vertexNormals;
-    std::vector<float> m_textureCoords;
-    std::vector<unsigned int> m_triangleIndices;
-    std::vector<int> m_lineIndices;
-    GLuint m_program;
+    std::vector<float> m_vertexPositions; // The vector of positions
+    std::vector<float> m_vertexNormals; // The vector of normals
+    std::vector<float> m_textureCoords; // The vector of the texture coordinates
+    std::vector<unsigned int> m_triangleIndices; // The vector of the triangles indices
+    std::vector<int> m_lineIndices; // The vector of line indices
+    GLuint m_program; // The program attached to each mesh
 
     float r; // Red
     float g; // Green
@@ -257,14 +267,15 @@ private:
     float y; // y coordinate
     float z; // z coordinate
     float radius_multiplier;
-    GLuint textureInt;
+    GLuint textureInt; // The ID of the loaded texture
 
-    glm::vec3 rotation_axis;
-    float rotation_angle;
+    bool isSun;
+    glm::vec3 rotation_axis; // The axis of rotation
+    float rotation_angle; // The angle rotation
 
-    GLuint m_vao = 0;
-    GLuint m_posVbo = 0;
-    GLuint m_normalVbo = 0;
+    GLuint m_vao = 0; // Array object
+    GLuint m_posVbo = 0; // Position buffer object
+    GLuint m_normalVbo = 0; // Normals buffer object
     GLuint m_ibo = 0;  // Index buffer object
     GLuint m_tbo = 0; // Texture buffer object
 

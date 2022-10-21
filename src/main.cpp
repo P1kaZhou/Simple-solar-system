@@ -33,17 +33,18 @@
 const static float kSizeSun = 1;
 const static float kSizeEarth = 0.5;
 const static float kSizeMoon = 0.25;
-const static float kSizeMercury = 0.35;
+// const static float kSizeMercury = 0.35;
 const static float kRadOrbitEarth = 10.;
 const static float kRadOrbitMoon = 2.;
-const static float kRadOrbitMercury = 3.;
+// const static float kRadOrbitMercury = 3.;
 
+// The only hard value, everything else if relative to the speed of revolution of the Earth
 const static float earthRevolutionSpeed = 30.0 * M_PI / 360.0; // Orbital period of Earth
 const static float earthRotationSpeed = 2.0*earthRevolutionSpeed;
 const static float moonRevolutionSpeed = 2.0*earthRotationSpeed;
 const static float moonRotationSpeed = moonRevolutionSpeed;
-const static float mercuryRevolutionSpeed = earthRevolutionSpeed*3.0;
-const static float mercuryRotationSpeed = earthRotationSpeed / 10.;
+// const static float mercuryRevolutionSpeed = earthRevolutionSpeed*3.0;
+//const static float mercuryRotationSpeed = earthRotationSpeed / 10.;
 
 
 // Window parameters
@@ -62,7 +63,7 @@ const std::string mercuryTexture = "media/mercury.jpg";
 Mesh meshSun;
 Mesh meshEarth;
 Mesh meshMoon;
-Mesh meshMercury;
+// Mesh meshMercury;
 
 float _radius;
 float _theta;
@@ -137,7 +138,7 @@ void initOpenGL() {
     glEnable(GL_CULL_FACE); // Enables face culling (based on the orientation defined by the CW/CCW enumeration).
     glDepthFunc(GL_LESS);   // Specify the depth test for the z-buffer
     glEnable(GL_DEPTH_TEST);      // Enable the z-buffer test in the rasterization
-    glClearColor(0.8f, 0.8f, 0.8f, 1.0f); // specify the background color, used any time the framebuffer is cleared
+    glClearColor(0.9f, 0.9f, 0.9f, 0.5f); // specify the background color, used any time the framebuffer is cleared
 }
 
 void initGPUprogram() {
@@ -147,20 +148,23 @@ void initGPUprogram() {
     meshEarth.setColor(0.0, 1.0, 0.0);
     meshMoon.initGPUProgram(moonTexture);
     meshMoon.setColor(0.0, 0.0, 1.0);
-    meshMercury.initGPUProgram(mercuryTexture);
-    meshMercury.setColor(0.86, 0.86, 0.86);
+    // meshMercury.initGPUProgram(mercuryTexture);
+    // meshMercury.setColor(0.86, 0.86, 0.86);
 }
 
 // Define your meshSun(es) in the CPU memory
 void initCPUgeometry() {
     glm::vec3 sunRotation = glm::vec3(1., 0., 0.);
+    meshSun.setSun(true);
     meshSun.initCPU(32, kSizeSun, 0., 0., 0., sunRotation);
     glm::vec3 earthRotation = glm::vec3(cos(23.5 * M_PI / 180.), 0., sin(23.5 * M_PI / 180.));
+    meshEarth.setSun(false);
     meshEarth.initCPU(32, kSizeEarth, 10., 0., 0., earthRotation);
     glm::vec3 moonRotation = glm::vec3(1., 0., 0.);
+    meshMoon.setSun(false);
     meshMoon.initCPU(32, kSizeMoon, 12., 0., 0., moonRotation);
-    glm::vec3 mercuryRotation = glm::vec3(cos(2.0 * M_PI / 180.), 0., sin(2.0 * M_PI / 180.));
-    meshMercury.initCPU(32, kSizeMercury, kRadOrbitMercury, 0., 0., mercuryRotation);
+    // glm::vec3 mercuryRotation = glm::vec3(cos(2.0 * M_PI / 180.), 0., sin(2.0 * M_PI / 180.));
+    // meshMercury.initCPU(32, kSizeMercury, kRadOrbitMercury, 0., 0., mercuryRotation);
 }
 
 
@@ -168,7 +172,7 @@ void initGPUgeometry() {
     meshSun.initGPUGeometrySphere();
     meshEarth.initGPUGeometrySphere();
     meshMoon.initGPUGeometrySphere();
-    meshMercury.initGPUGeometrySphere();
+    // meshMercury.initGPUGeometrySphere();
 }
 
 void initCamera() {
@@ -215,7 +219,7 @@ void render() {
     meshSun.render(g_camera);
     meshEarth.render(g_camera);
     meshMoon.render(g_camera);
-    meshMercury.render(g_camera);
+    // meshMercury.render(g_camera);
 
 }
 
@@ -237,14 +241,14 @@ void update(const float currentTimeInSec) {
     meshMoon.setX(future_moon_x);
     meshMoon.setZ(future_moon_z);
 
-    float future_mercury_x = kRadOrbitMercury* cos(mercuryRevolutionSpeed * currentTimeInSec);
-    float future_mercury_z = kRadOrbitMercury* sin(mercuryRevolutionSpeed * currentTimeInSec);
-    meshMercury.setX(future_mercury_x);
-    meshMercury.setZ(future_mercury_z);
+    // float future_mercury_x = kRadOrbitMercury* cos(mercuryRevolutionSpeed * currentTimeInSec);
+    // float future_mercury_z = kRadOrbitMercury* sin(mercuryRevolutionSpeed * currentTimeInSec);
+    // meshMercury.setX(future_mercury_x);
+    // meshMercury.setZ(future_mercury_z);
 
     meshEarth.changeRotationAngle(earthRotationSpeed * currentTimeInSec);
     meshMoon.changeRotationAngle(moonRotationSpeed * currentTimeInSec);
-    meshMercury.changeRotationAngle(mercuryRotationSpeed*currentTimeInSec);
+    // meshMercury.changeRotationAngle(mercuryRotationSpeed*currentTimeInSec);
 }
 
 int main(int argc, char **argv) {
