@@ -45,9 +45,9 @@ const static float kRadOrbitEarth = 10.;
 const static float kRadOrbitMoon = 2.;
 
 const static float earthRevolutionSpeed = 30.0 * M_PI / 360.0; // Orbital period of Earth
-const static float moonRevolutionSpeed = 30.0 * 4.0 * M_PI / 360.0;
-const static float earthRotationSpeed = 30.0 * 2.0 * M_PI / 360.0;
-const static float moonRotationSpeed = 30.0 * 4.0 * M_PI / 360.0;
+const static float earthRotationSpeed = 2.0*earthRevolutionSpeed;
+const static float moonRevolutionSpeed = 2.0*earthRotationSpeed;
+const static float moonRotationSpeed = moonRevolutionSpeed;
 
 
 // Window parameters
@@ -308,7 +308,6 @@ void render() {
 // Update any accessible variable based on the current time
 void update(const float currentTimeInSec) {
     // std::cout << currentTimeInSec << std::endl;
-
 
     //Compute the movement
 

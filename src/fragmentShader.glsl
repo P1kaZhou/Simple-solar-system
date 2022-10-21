@@ -3,9 +3,9 @@
 in vec3 fNormal;
 in vec3 fPosition;
 in vec2 TexCoord;
+in vec3 fPositionSphereCenter;
 
 uniform vec3 camPos;
-
 
 // out vec3 FragColor;
 out vec4 color;	  // Shader output: color of this fragment
@@ -14,10 +14,11 @@ struct Material {
 // ...
 	sampler2D albedoTex; // texture unit, relate to glActivateTexture(GL_TEXTURE0 + i)
 };
+
 uniform Material material;
 
 	void main() {
-
+		/*
 		vec3 FragColor = texture(material.albedoTex, TexCoord).rgb;
 
 		float kd = 0.7;
@@ -32,7 +33,7 @@ uniform Material material;
 		vec3 ambient = FragColor;
 		vec3 diffuse = kd*max(dot(n,l), 0)*(ambient);
 		vec3 specular = ks*pow(max(dot(v,l),0),alpha)*(ambient);
-
-		color = vec4(ambient + diffuse + specular, 1.0); // Building RGBA from RGB.
-
+		*/
+		// color = vec4(ambient + diffuse + specular, 1.0); // Building RGBA from RGB.
+		color = vec4(TexCoord, 0.0,1.0);
 	}
