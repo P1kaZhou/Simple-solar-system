@@ -50,12 +50,12 @@ public:
         glUniform4f(glGetUniformLocation(m_program, "position"), x, y, z, 1.0f);
         glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(trans));
 
-        glActiveTexture(GL_TEXTURE0); // activate texture unit 0
-        glBindTexture(GL_TEXTURE_2D, textureInt);
-        glBindVertexArray(m_vao); // What pointer lol
-        glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0); //todo: une histoire d'arguments + shaders
+
+        // glActiveTexture(GL_TEXTURE0); // activate texture unit 0
+        // glBindTexture(GL_TEXTURE_2D, textureInt);
         // Line indices or textureCoords? Or triangleindices?
         // glDrawElements(GL_TRIANGLES, m_textureCoords.size(), GL_FLOAT, 0); // Arguments I put there?
+
 
     };
 
@@ -157,8 +157,8 @@ public:
     } // should generate a unit sphere
 
     void initGPUGeometrySphere() {
-
         glGenVertexArrays(1, &m_vao);
+
         // If your system doesn't support OpenGL 4.5, you should use this instead of glCreateVertexArrays.
         glBindVertexArray(m_vao);
         // Generate a GPU buffer to store the positions of the vertices
@@ -178,43 +178,38 @@ public:
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
         glEnableVertexAttribArray(1);
 
-        size_t vertexTextureBufferSize = sizeof(float) * m_textureCoords.size();
-        glGenBuffers(1, &m_tbo);
-        glBindBuffer(GL_ARRAY_BUFFER, m_tbo);
-        glBufferData(GL_ARRAY_BUFFER, vertexTextureBufferSize, m_textureCoords.data(), GL_DYNAMIC_READ);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), 0);
-        glEnableVertexAttribArray(2);
+        // size_t vertexTextureBufferSize = sizeof(float) * m_textureCoords.size();
+        // glGenBuffers(1, &m_tbo);
+        // glBindBuffer(GL_ARRAY_BUFFER, m_tbo);
+        // glBufferData(GL_ARRAY_BUFFER, vertexTextureBufferSize, m_textureCoords.data(), GL_DYNAMIC_READ);
+        // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), 0); // todo: what do I put here as well
+        // glEnableVertexAttribArray(2);
 
         // Same for an index buffer object that stores the list of indices of the triangles forming the mesh
         size_t indexBufferSize = sizeof(unsigned int) * m_triangleIndices.size();
         glGenBuffers(1, &m_ibo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferSize, m_triangleIndices.data(), GL_DYNAMIC_READ);
+        // glVertexAttribPointer(2, 3, GL_INT, GL_FALSE, 3 * sizeof(GLuint), 0);
+        // glEnableVertexAttribArray(2); // Probs nothing instead
 
-        std::cout <<"The 15th is " << m_textureCoords[15] << std::endl;
 
         glBindVertexArray(0); // deactivate the VAO for now, will be activated again when rendering
     }
 
-    void initGPUProgram(std::string texture) {
-
-        m_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
-        loadShader(m_program, GL_VERTEX_SHADER, "vertexShader.glsl");
-        loadShader(m_program, GL_FRAGMENT_SHADER, "fragmentShader.glsl");
-        glLinkProgram(m_program); // The main GPU program is ready to be handle streams of polygons
-
-        // loadTextureFromFileToGPU(le path to le texture):
-
+    void loadTextureFromFileToGPU(std::string texture){
         int width, height, numComponents;
         // Loading the image in CPU memory using stb_image
-        unsigned char *data = stbi_load(texture.c_str(),&width, &height,
+        unsigned char *data = stbi_load(
+                texture.c_str(),
+                &width, &height,
                 &numComponents, // 1 for an 8 bit grey-scale image, 3 for 24bits RGB image, 4 for 32bits RGBA image
                 0);
 
         GLuint texID;
 
         glGenTextures(1, &texID); // generate an OpenGL texture container
-        // glActiveTexture(GL_TEXTURE0); // Idk about this one
+        // glActiveTexture(GL_TEXTURE0); Idk about this one
         glBindTexture(GL_TEXTURE_2D, texID); // activate the texture
 
         // Setup the texture filtering option and repeat mode; check www.opengl.org for details.
@@ -230,13 +225,25 @@ public:
         glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
 
         textureInt = texID;
+    }
+
+    void initGPUProgram(std::string texture) {
+
+        m_program = glCreateProgram(); // Create a GPU program, i.e., two central shaders of the graphics pipeline
+        loadShader(m_program, GL_VERTEX_SHADER, "vertexShader.glsl");
+        loadShader(m_program, GL_FRAGMENT_SHADER, "fragmentShader.glsl");
+        glLinkProgram(m_program); // The main GPU program is ready to be handle streams of polygons
+
+        loadTextureFromFileToGPU(texture);
+
         // END OF TEXTURE LOADING FROM FILE TO GPU
 
         // glGenerateMipmap(GL_TEXTURE_2D); IDK ABOUT THIS
 
-        // glUniform1i(glGetUniformLocation(m_program, "material.albedoTex"), 0);
+        glUniform1i(glGetUniformLocation(m_program, "material.albedoTex"), 0);
 
         // glDrawElements(GL_TRIANGLES, vertexTextureBufferSize, GL_UNSIGNED_INT, 0);
+
 
     }
 
