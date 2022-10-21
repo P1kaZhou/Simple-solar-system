@@ -26,6 +26,7 @@ public:
 
         glUseProgram(m_program);
         setColor(r, g, b);
+        setSun(isSun);
 
         const glm::mat4 viewMatrix = g_camera.computeViewMatrix();
         const glm::mat4 projMatrix = g_camera.computeProjectionMatrix();
@@ -250,6 +251,11 @@ public:
 
     void setSun(bool isSun){
         this->isSun = isSun;
+        if (isSun) {
+            glUniform1i(glGetUniformLocation(m_program, "isSun"), 1);
+        } else {
+            glUniform1i(glGetUniformLocation(m_program, "isSun"), 0);
+        }
     }
 
 private:
