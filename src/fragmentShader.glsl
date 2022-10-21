@@ -7,7 +7,6 @@ in vec2 TexCoord;
 uniform vec3 camPos;
 uniform vec3 diffuseColor;
 
-
 // out vec3 FragColor;
 out vec4 color;	  // Shader output: color of this fragment
 
@@ -31,7 +30,7 @@ void main() {
 	vec3 v = normalize(camPos - fPosition);
 	vec3 r = normalize(2*n*dot(n,l) - l);
 	vec3 ambient = FragColor;
-	vec3 diffuse = kd*max(dot(n,l), 0)*(ambient);
+	vec3 diffuse = kd*max(dot(n,l), 0)*(ambient*diffuseColor);
 	vec3 specular = ks*pow(max(dot(v,l),0),alpha)*(ambient);
 
 	color = vec4(ambient + diffuse + specular, 1.0); // Building RGBA from RGB.

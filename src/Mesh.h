@@ -44,17 +44,12 @@ public:
 
         glUniform4f(glGetUniformLocation(m_program, "position"), x, y, z, 1.0f);
         glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(trans));
-        glBindVertexArray(m_vao);     // activate the VAO storing geometry data
-        glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0);
-        // Call for rendering: stream the current GPU geometry through the current GPU program
-
-        // MOVE
-
 
         glActiveTexture(GL_TEXTURE0); // activate texture unit 0
         glBindTexture(GL_TEXTURE_2D, textureInt);
-        // Line indices or textureCoords? Or triangleindices?
-
+        glBindVertexArray(m_vao);     // activate the VAO storing geometry data
+        glDrawElements(GL_TRIANGLES, m_triangleIndices.size(), GL_UNSIGNED_INT, 0);
+        // Call for rendering: stream the current GPU geometry through the current GPU program
     };
 
 
@@ -105,7 +100,6 @@ public:
                 m_vertexNormals.push_back(nx);
                 m_vertexNormals.push_back(ny);
                 m_vertexNormals.push_back(nz);
-
 
                 // vertex tex coord (s, t) range between [0, 1]
                 s = j / (float) resolution;
@@ -201,18 +195,19 @@ public:
         GLuint texID; // OpenGL texture identifier
         glGenTextures(1, &texID); // generate an OpenGL texture container
         glBindTexture(GL_TEXTURE_2D, texID); // activate the texture
-// Setup the texture filtering option and repeat mode; check www.opengl.org for details.
+        // Setup the texture filtering option and repeat mode; check www.opengl.org for details.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-// Fill the GPU texture with the data stored in the CPU image
+        // Fill the GPU texture with the data stored in the CPU image
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-// Free useless CPU memory
+        // Free useless CPU memory
         stbi_image_free(data);
         glBindTexture(GL_TEXTURE_2D, 0); // unbind the texture
 
         textureInt = texID; // = return texID
+
     }
 
     void initGPUProgram(std::string texture) {
@@ -271,7 +266,7 @@ private:
     GLuint m_posVbo = 0;
     GLuint m_normalVbo = 0;
     GLuint m_ibo = 0;  // Index buffer object
-    GLuint m_tbo = 0;
+    GLuint m_tbo = 0; // Texture buffer object
 
 };
 
