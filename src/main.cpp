@@ -57,7 +57,7 @@ GLuint g_program = 0; // A GPU program contains at least a vertex shader and a f
 const std::string sunTexture = "media/earth.jpg";
 const std::string earthTexture = "media/moon.jpg";
 const std::string moonTexture = "media/sun.jpg";
-const std::string mercuryTexture = "media/mercury.jpg";
+// const std::string mercuryTexture = "media/mercury.jpg";
 
 //Meshes initialization
 Mesh meshSun;

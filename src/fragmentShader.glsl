@@ -22,10 +22,11 @@ void main() {
 
 	float kd = 0.7;
 	float alpha = 0.6;
-	float ks = 0.4;
+	float ks = 0.6;
 
 	vec3 n = normalize(fNormal);
 	vec3 l = normalize(vec3(1.0, 1.0, 0.0)); // light direction vector (hard-coded just for now)
+	//todo: make the difference between le sun and le no sun
 
 	vec3 v = normalize(camPos - fPosition);
 	vec3 r = normalize(2*n*dot(n,l) - l);
