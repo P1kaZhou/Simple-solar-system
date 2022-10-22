@@ -138,7 +138,7 @@ void initOpenGL() {
     glEnable(GL_CULL_FACE); // Enables face culling (based on the orientation defined by the CW/CCW enumeration).
     glDepthFunc(GL_LESS);   // Specify the depth test for the z-buffer
     glEnable(GL_DEPTH_TEST);      // Enable the z-buffer test in the rasterization
-    glClearColor(0.9f, 0.9f, 0.9f, 0.5f); // specify the background color, used any time the framebuffer is cleared
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // specify the background color, used any time the framebuffer is cleared
 }
 
 void initGPUprogram() {

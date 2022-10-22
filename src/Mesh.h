@@ -41,6 +41,7 @@ public:
         trans = glm::translate(trans, glm::vec3(x, y, z));
         trans = glm::scale(trans, glm::vec3(radius_multiplier, radius_multiplier, radius_multiplier));
         trans = glm::rotate(trans, rotation_angle, rotation_axis);
+        glUniform1i(glGetUniformLocation(m_program, "material.albedoTex"), 0);
 
         glUniform4f(glGetUniformLocation(m_program, "position"), x, y, z, 1.0f);
         glUniformMatrix4fv(glGetUniformLocation(m_program, "trans"), 1, GL_FALSE, glm::value_ptr(trans));
